@@ -1,0 +1,132 @@
+<%
+  rubric_criterion ||= nil
+  criterion = rubric_criterion || nil
+  assessing ||= false
+  rubric ||= nil
+  rubric_association ||= nil
+  edit_view ||= false
+  assessment_rating ||= nil
+
+  learning_outcome_criterion = criterion.try(:learning_outcome_id)
+  description = criterion.try(:description) || t('defaults.description', "Description of criterion")
+%>
+
+<tr id="criterion_<%= criterion ? criterion.id : "blank" %>" class="criterion <%= "blank" unless criterion %> <%= 'ignore_criterion_for_scoring' if criterion && criterion.ignore_for_scoring %> <%= 'learning_outcome_criterion' if learning_outcome_criterion %>" style="<%= hidden unless criterion %>">
+  <td class="criterion_description hover-container">
+    <div class="container">
+      <%= image_tag "flagged_question.png", :class => "learning_outcome_flag", :title => t('titles.linked_to_learning_outcome', "This criterion is linked to a Learning Outcome") %>
+      <span class="description criterion_description_value"><%= description %></span>
+      <span class="learning_outcome_id" style="display: none;"><%= criterion.try(:learning_outcome_id) %></span>
+      <span class="criterion_id" style="display: none;"><%= criterion.try(:id) %></span>
+      <div class="long_description_holder editing <%= 'empty' if !criterion || criterion.long_description.blank? %>">
+        <a href="#" class="long_description_link"><%= t 'links.view_longer_description', "view longer description" %></a>
+        <textarea class="long_description" aria-label="<%= t 'labels.long_description', "Long Description" %>" style="display: none;"><%= h((criterion.try(:long_description) || '')) %></textarea>
+      </div>
+      <div class="threshold">
+        <%= before_label :threshold, "threshold" %>
+        <%= t :points, "%{points} pts", :points => %{<span class="mastery_points">#{criterion.mastery_points rescue 5}</span>}.html_safe %>
+      </div>
+      <% if !learning_outcome_criterion %>
+        <div class="links editing">
+          <a href="#" class="edit_criterion_link"><i class="icon-edit standalone-icon"></i><span class="screenreader-only"><%= t 'icons.edit_description', 'Edit criterion description' %></span></a>
+        </div>
+      <% end %>
+    </div>
+    <% if rubric && !rubric.free_form_criterion_comments && assessment_rating && assessment_rating[:comments] %>
+      <div class="assessment-comments">
+        <h6><%= t('instructor_comments', 'Instructor Comments') %></h6>
+        <div><%= format_message( assessment_rating[:comments] ).first %></div>
+      </div>
+    <% end %>
+  </td>
+  <td style="padding: 0;">
+    <% if !edit_view && criterion && rubric && rubric.free_form_criterion_comments %>
+      <div class="custom_ratings_entry assessing">
+        <div style="margin-left: 5px; margin-top: 2px; <%= hidden unless rubric_association && rubric_association.summary_data && rubric_association.summary_data[:saved_comments] && rubric_association.summary_data[:saved_comments][criterion.id.to_s] %>" class="saved_custom_rating_holder">
+          <select class="saved_custom_rating">
+            <option value=""><%= t 'options.select', "[ Select ]" %></option>
+            <% (rubric_association.summary_data[:saved_comments][criterion.id.to_s] || [] rescue []).each do |comment| %>
+              <option value="<%= URI.escape(comment) %>" class="comment"><%= comment[0..50] %></option>
+            <% end %>
+          </select>
+        </div>
+        <textarea style="margin: 5px; min-width: 100px; height: 35px;" class="custom_rating_field"></textarea>
+        <div>
+          <input type="checkbox" id="save_criterion_message_<%= criterion ? criterion.id : "blank" %>" class="save_custom_rating" value="1"/>
+          <label for="save_criterion_message_<%= criterion ? criterion.id : "blank" %>"><%= t 'labels.save_criterion_for_reuse', "Save this comment for reuse" %></label>
+        </div>
+      </div>
+      <div class="displaying custom_rating_comments not_assessing" style="font-size: 0.8em; padding: 0px 5px;">
+        <%= assessment_rating && (assessment_rating[:comments_html] ? assessment_rating[:comments_html].html_safe : assessment_rating[:comments]) %>
+      </div>
+    <% else %>
+      <table class="ratings" style="<%= hidden if rubric && rubric.free_form_criterion_comments %>"><tr>
+        <% ratings = (criterion.ratings rescue nil); ratings = nil if ratings && ratings.length < 2  %>
+        <% ratings ||= [OpenObject.new(:id => "blank", :description => t(:full_marks, "Full Marks"), :points => 5), OpenObject.new(:id => "blank_2", :description => t(:no_marks, "No Marks"), :points => 0)] %>
+        <% ratings.each_index do |idx| %>
+          <% rating = ratings[idx]; rating.edge = (idx == 0 || idx == ratings.length - 1) %>
+          <td id="rating_<%= rating.id %>" class="rating <%= "edge_rating" if rating.edge %>" tabindex="0">
+          <div class="container">
+            <div class="description rating_description_value"><%= rating.description %></div>
+            <span class="nobr"><%= t :points, "%{points} pts", :points => %{<span class="points">#{rating.points}</span>}.html_safe %></span>
+            <span class="rating_id" style="display: none;"><%= rating && rating.id %></span>
+            <% if !learning_outcome_criterion %>
+              <div class="links">
+                <a href="#" class="edit_rating_link"><i class="icon-edit standalone-icon"></i><span class="screenreader-only"><%= t 'icons.edit', 'Edit rating' %></span></a>
+                <a href="#" class="delete_rating_link"><i class="icon-end standalone-icon"></i><span class="screenreader-only"><%= t 'icons.delete', 'Delete rating' %></span></a>
+                <!-- Hidden if last -->
+                <a href="#" class="add_rating_link_after"><i class="icon-add standalone-icon"></i><span class="screenreader-only"><%= t 'icons.add_new_rating_after', 'Add new rating category after current rating' %></span></a>
+              </div>
+            <% end %>
+          </div>
+          </td>
+        <% end %>
+      </tr></table>
+      <div style="<%= hidden unless rubric && rubric.free_form_criterion_comments %> font-style: italic; font-size: 0.8em; margin: 5px;" class="custom_ratings">
+        <%= t 'description.custom_comments_area', "This area will be used by the assessor to leave
+        comments related to this criterion." %>
+      </div>
+    <% end %>
+  </td>
+  <td class="nobr points_form">
+    <div class="editing" style="white-space: normal">
+      <span style="white-space: nowrap; font-size: 0.8em">
+        <% rating_points = %{<input type="text" aria-label="#{h(t(:points_label, "Points"))}" value="#{ assessing ? (assessment_rating.points rescue "") : (criterion.points rescue 5) }" class="criterion_points span1 no-margin-bottom" />}.html_safe %>
+        <% if assessing && criterion && criterion.points %>
+          <%= t :points_out_of2, "%{points} / %{total} pts", :points => rating_points, :total => criterion.points %>
+        <% else %>
+          <%= t :points, "%{points} pts", :points => rating_points %>
+        <% end %>
+      </span><br />
+    </div>
+    <div class="displaying">
+      <span style="white-space: nowrap;">
+        <span class="criterion_rating_points_holder" style="<%= hidden unless assessment_rating %>">
+          <span class="criterion_rating_points"><%= assessment_rating ? assessment_rating[:points] : nbsp %></span> /
+        </span>
+        <%= t :points, "%{points} pts", :points => %{<span class="display_criterion_points">#{ criterion.points rescue 5 }</span>}.html_safe %><br />
+      </span>
+    </div>
+    <div class="ignoring">
+      <span> -- </span>
+    </div>
+    <div class="criterion_comments">
+      <% if !rubric || !rubric.free_form_criterion_comments %>
+        <a href="#" class="no-hover criterion_comments_link" title="<%= t 'links.additional_comments', "Additional Comments" %>">
+          <%= image_tag "rubric_comment.png", :alt => t('icons.additional_comments', 'Additional Comments') %>
+        </a>
+        <div class="custom_rating" style="display: none;"><%= assessment_rating ? assessment_rating[:comments] : '' %></div>
+      <% end %>
+    </div>
+  </td>
+  <td class="editing">
+    <a
+      href="#"
+      class="delete_criterion_link"
+      title="<%= t(:delete_criterion_row, 'Delete Criterion Row') %>"
+      role="button"
+      aria-label="<%= t(:delete_criterion_row, 'Delete Criterion Row') %>"
+    ><i class="icon-end"></i></a>
+  </td>
+</tr>
+

@@ -1,0 +1,44 @@
+<%-
+  @locale = raw I18n.locale.to_json
+  @body_classes ||= []
+  @body_classes << "context-#{@context.asset_string}" if @context
+  yield :pre_html
+
+-%><!DOCTYPE html>
+<!--[if gte IE 9 ]><html class="ie ie9 scripts-not-loaded" lang=<%= @locale %>> <![endif]-->
+<!--[if !(IE)]><!--> <html class="not-ie scripts-not-loaded" lang=<%= @locale %>> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title><%= (yield :page_title).presence || @page_title || t('default_page_title', "Canvas LMS") %></title>
+  <!--[if lte IE 8]> <meta http-equiv=refresh content="0; URL=/ie-8-is-not-supported.html" /> <![endif]-->
+
+  <%= favicon_link_tag(favicon) %>
+  <%= favicon_link_tag(brand_variable('ic-brand-apple-touch-icon'), rel: 'apple-touch-icon', type: nil) %>
+
+  <%= yield :auto_discovery %>
+  <%= yield :head %>
+  <%= yield :meta_tags %>
+  <%= include_custom_meta_tags %>
+  <% if use_new_styles? %>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <% end %>
+  <%= include_css_bundles %>
+  <%= yield :stylesheets %>
+  <%= include_account_css %>
+  <script>
+    // listen for any clicks on links that have href="#" and queue them to be fired on dom ready.
+      function _earlyClick(e){
+        var cur = e.target || e.srcElement;
+        while ( cur && cur.ownerDocument ) {
+          if ( cur.getAttribute('href') == '#' ) {
+            e.preventDefault();
+            _earlyClick.clicks = _earlyClick.clicks || [];
+            _earlyClick.clicks.push(cur);
+            break;
+          }
+          cur = cur.parentNode;
+        }
+      }
+      document.addEventListener('click', _earlyClick);
+  </script>
+</head>

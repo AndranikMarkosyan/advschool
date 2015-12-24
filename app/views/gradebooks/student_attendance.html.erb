@@ -1,0 +1,60 @@
+<% content_for :page_title do %><%= t(:page_title, "Attendance for %{user}", :user => @user.name) %><% end %>
+
+<% content_for :right_side do %>
+  <div class='rs-margin-all'>
+    <% if can_do(@enrollment, @current_user, :read_grades) %>
+      <a class="btn button-sidebar-wide" href="<%= context_url(@context, :context_student_grades_url, @user.id) %>"><%= image_tag "grading_icon.png" %> <%= t('links.grades', "Grades for %{user}", :user => context_user_name(@context, @user)) %></a>
+    <% end %>
+    <% if can_do(@context, @current_user, :send_messages) %>
+      <a class="btn button-sidebar-wide" href="<%= message_user_path(@user) %>"><%= image_tag "email.png" %> <%= t('links.message_user', "Message %{user}", :user => context_user_name(@context, @user)) %></a>
+    <% end %>
+  </div>
+<% end %>
+<% if @assignments.empty? %>
+  <div style="margin-left: 20px;">
+    <h2><%= t('headers.no_attendance', "Attendance") %></h2>
+    <%= t(:no_attendance_assignments, "No attendance assignments have been created.") %>
+  </div>
+<% else %>
+  <h2><%= t('headers.student_attendance', "Attendance for %{user}", :user => @user.name) %></h2>
+  <table id="student_attendance">
+    <thead>
+      <tr>
+        <th style="padding-right: 50px;">
+          <%= t('headers.assignment', "Assignment") %>
+        </th>
+        <th style="text-align: center;">
+          <%= t('headers.mark', "Mark") %>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+    <% @assignments.each do |assignment| %>
+    <tr>
+      <td id="assignment_<%= assignment.id %>" class="assignment">
+        <span href="<%= context_url(@context, :context_assignment_url, assignment.id) %>">
+          <%= assignment.title %>
+        </span>
+        <div class="sub_title">
+          <%= datetime_string(assignment.due_at) %>
+        </div>
+      </td>
+      <% submission = @submissions.detect{|s| s.assignment_id == assignment.id} %>
+      <td class="submission">
+        <a href="<%= context_url(@context, :context_assignment_submission_url, assignment.id, @user.id) %>" class="no-hover">
+        <% if submission && (submission.grade == "pass" || submission.grade == "complete") %>
+          <%= image_tag "graded.png", :alt => t('titles.present', "Marked as Present, click for more details"), :title => t('titles.present', "Marked as Present, click for more details") %>
+        <% elsif submission && (submission.grade == "fail" || submission.grade == "incomplete") %>
+          <%= image_tag "not_graded.png", :alt => t('titles.absent', "Marked as Absent, click for more details"), :title => t('titles.absent', "Marked as Absent, click for more details") %>
+        <% else %>
+          <span title="<%= t('titles.click_for_details', "Click for More Details") %>"> - </span>
+        <% end %>
+        </a>
+      </td>
+    </tr>
+    <% end %>
+    </tbody>
+  </table>
+  <% js_bundle 'legacy/gradebooks_student_attendance' %>
+  <% css_bundle :attendance %>
+<% end %>

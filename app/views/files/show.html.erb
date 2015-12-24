@@ -1,0 +1,56 @@
+<% content_for :page_title do %>
+  <%= join_title @attachment.display_name, @context.name %>
+<% end %>
+<% add_crumb @attachment.display_name, context_url(@context, :context_file_url, @attachment) %>
+<% download_url = context_url(@context, :context_file_download_url, @attachment.id) %>
+<% js_bundle 'module_sequence_footer' %>
+<% if !can_do(@attachment.context, @current_user, :manage_files) && (locked = @attachment.locked_for?(@current_user)) %>
+  <div style="margin: 10px 50px;">
+    <% if @attachment.folder && @attachment.folder.locked? %>
+      <%= t 'messages.folder_locked', "The folder \"%{folder},\" which includes this file, has been locked.", :folder => @attachment.folder.name %>
+    <% else %>
+      <%= locked.is_a?(Hash) ? lock_explanation(locked, 'file', @context) : t('messages.file_locked', "This file has not been unlocked yet.") %>
+    <% end %>
+  </div>
+<% else %>
+  <% if @attachment.content_type == "application/x-shockwave-flash" %>
+    <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" class="embedded_swf">
+      <param name="movie" value="<%= safe_domain_file_url(@attachment) %>" />
+      <param name="wmode" value="transparent" />
+      <param name="salign" value="t" />
+      <param name="allowscriptaccess" value="never" />
+      <!--[if !IE]>-->
+      <object type="application/x-shockwave-flash" data="<%= safe_domain_file_url(@attachment) %>" class="embedded_swf">
+        <param name="wmode" value="transparent" />
+        <param name="salign" value="t" />
+        <param name="allowscriptaccess" value="never" />
+        <!--<![endif]-->
+        <!--[if !IE]>-->
+      </object>
+      <!--<![endif]-->
+    </object>
+    <a style="display:block;" href="<%= safe_domain_file_url(@attachment, nil, nil, true) %>">Download <%= @attachment.display_name %></a>
+  <% elsif @attachment.inline_content? %>
+    <% js_bundle :file_inline %>
+    <iframe id="file_content" src="<%= safe_domain_file_url(@attachment) %>" style="width: 100%; height: 400px;"></iframe>
+  <% elsif @attachment.content_type && @attachment.content_type.match(/\Aimage\//) %>
+    <h2><%= @attachment.display_name %></h2>
+    <%= link_to(image_tag(download_url, :alt => @attachment.display_name), download_url) %>
+  <% elsif @attachment.content_type && @attachment.content_type.match(/\Avideo\/|audio\//) %>
+    <% js_bundle :file_preview %>
+    <h2><%= @attachment.display_name %></h2>
+    <div id="media_preview" <%= media_preview_attributes(@attachment) %>></div>
+    <span style="font-size: 1.2em;">
+        <%= link_to "Download #{@attachment.display_name}", download_url %>
+    </span> (<%= @attachment.readable_size %>)
+  <% else %>
+    <% js_bundle :file_show %>
+    <h2><%= @attachment.display_name %></h2>
+    <span style="font-size: 1.2em;">
+      <%= link_to "Download #{@attachment.display_name}", download_url %>
+    </span> (<%= @attachment.readable_size %>)
+    <div id="doc_preview" <%= doc_preview_attributes(@attachment) %>></div>
+  <% end %>
+<% end %>
+<%= render :partial => 'shared/sequence_footer', :locals => {:asset => @attachment} %>
+

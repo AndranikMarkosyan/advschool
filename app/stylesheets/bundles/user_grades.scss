@@ -1,0 +1,27 @@
+@import "base/environment";
+
+.course_details {
+  border-collapse: collapse;
+  min-width: 400px;
+  margin-left: 20px;
+  border-spacing: 0;
+  th {
+    text-align: left;
+  }
+  td {
+    border-bottom: 1px solid #ccc;
+  }
+  .course {
+    font-size: 1.2em;
+    padding: 6px 50px 6px 5px;
+  }
+  .percent {
+    text-align: center;
+    font-size: 1.2em;
+    font-weight: bold;
+    min-width: 73px;
+  }
+  .report {
+    padding: 12px;
+  }
+}

@@ -1,0 +1,31 @@
+<div class="submission_detail">
+  {{#if submission_type}}
+    {{#if url}}
+      Submission URL: <a class="url-submission" href="{{url}}" title="{{#t "go_to_submission_url"}}Go to submission URL{{/t}}" target="_blank">{{url}}</a>
+    {{/if}}
+    {{#if attachments}}
+      <label>{{#t "submitted_files"}}Submitted files:{{/t}}</label>
+      <div>
+        {{#each attachments}}
+          <div class="submisison-attachment">
+            {{#if turnitin.reportUrl}}
+              {{#with turnitin}}
+                <span class="turnitin_score_container">{{> turnitinScore}}</span>
+              {{/with}}
+            {{/if}}
+            <a href="{{url}}" class="{{mimeClass content-type}}" title="{{filename}}">{{display_name}}</a>
+          </div>
+        {{/each}}
+      </div>
+    {{/if}}
+    {{#ifEqual submission_type "online_text_entry"}}
+      {{#if turnitin.reportUrl}}
+        {{#with turnitin}}
+          <span class="turnitin_score_container">{{> turnitinScore}}</span>
+        {{/with}}
+      {{/if}}
+    {{/ifEqual}}
+  {{else}}
+    {{#t "no_submission"}}No submission{{/t}}
+  {{/if}}
+</div>

@@ -1,0 +1,13 @@
+<%= render :partial => "layouts/head" %>
+<body class="Sg-only">
+  <%= render :partial => 'shared/static_notices' %>
+  <%= render :partial => 'shared/flash_notices' %>
+
+  <div id="application">
+    <div id="main" class="Sg-only">
+    <%= yield %>
+    </div>s
+    <%= render :partial => 'layouts/foot', :locals => { :include_common_bundle => true } %>
+  </div> <!-- #application -- this is important to keep since it kicks off some of our js examples -->
+</body>
+</html>

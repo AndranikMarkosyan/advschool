@@ -1,0 +1,64 @@
+<%
+  content_for :page_title, "Calendar"
+  js_env :CALENDAR => {
+    :CONTEXTS => @contexts_json,
+    :MANAGE_CONTEXTS => @manage_contexts,
+    :SELECTED_CONTEXTS => @selected_contexts,
+    :ACTIVE_EVENT => @active_event_id,
+    :VIEW_START => @view_start,
+    :CAL2_ONLY => true,
+    :SHOW_SCHEDULER => @domain_root_account.show_scheduler?
+  }
+  js_bundle :calendar2
+  css_bundle :calendar2, :agenda_view
+  crumbs.clear
+  @body_classes << "full-width no-page-block hide-content-while-scripts-not-loaded"
+%>
+<h1 class="screenreader-only"><%= t(:page_title_header, "Calendar") %></h1>
+
+<% content_for :auto_discovery do %>
+  <%= auto_discovery_link_tag(:atom, @feed_url + '.atom', {:title => t(:feed_title, "Course Calendar Atom Feed")}) %>
+<% end %>
+
+<% content_for :right_side do %>
+  <a href="#" class="skip-to-calendar screenreader-only"><%= t(:skip_to_calendar, "Skip to calendar") %></a>
+
+  <div class="rs-section">
+    <div id="minical" aria-hidden="true"></div>
+  </div>
+  <div class="rs-section">
+    <h3 class="element_toggler" aria-controls="context-list-holder" aria-expanded="true"
+        aria-label="<%= t(:toggle_calendars, "Toggle calendars") %>" tabindex="-1">
+      <i class="icon-mini-arrow-down auto_rotate"></i> <%= t(:calendars, "Calendars") %>
+      <button class="screenreader-only" id="calendar-toggle-button"><%= t "Expand or Collapse Calendars" %></button>
+    </h3>
+    <div id="context-list-holder"></div>
+  </div>
+  <div class="rs-section" id="undated-events-section">
+    <h3 class="element_toggler" aria-controls="undated-events" aria-expanded="false"
+        aria-label="<%= t(:toggle_undated_items, "Toggle undated items") %>" tabindex="-1">
+      <i class="icon-mini-arrow-right auto_rotate"></i> <%= t(:undated_items, "Undated items") %>
+      <button class="screenreader-only" id="undated-events-button"><%= t "Expand or collapse Undated items" %></button>
+    </h3>
+    <div id="undated-events"></div>
+  </div>
+  <div class="rs-section" id="calendar-feed">
+    <a class="dialog_opener" aria-controls="calendar_feed_box" data-dialog-opts='{"resizable":false, "width": 400}' role="button" href="<%= @feed_url%>.ics">
+      <i class="icon-calendar-days"></i> <%= t :calendar_feed, "Calendar Feed" %>
+    </a>
+  </div>
+<% end %>
+<div style="display: none" id="calendar_feed_box" title="<%= t('feed_dialog_title', 'Calendar Feed') %>">
+  <p id="calendar-feed-message">
+    <%= t "calendar_feed_instructions", "Copy the link below and paste it into any calendar app that takes iCal feeds (Google Calendar, iCal, Outlook, etc.)" %>
+  </p>
+  <p id="calendar-feed-box-lower">
+    <input value="<%= @feed_url%>.ics"><br>
+    <a href="<%= @feed_url%>.ics"><%= t "links.feed", 'click here to view the feed' %></a>
+  </p>
+</div>
+
+<div id="calendar_header"></div>
+<div id="calendar-app"></div>
+<div id="calendar-drag-and-drop-container"></div>
+

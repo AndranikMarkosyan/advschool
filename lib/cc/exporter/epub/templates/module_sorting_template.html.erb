@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= title %></title>
+</head>
+  <body>
+    <h1 id="<%= content[:migration_id]%>"><%= title %></h1>
+    <ol>
+    <% content[:items].each do |item| %>
+      <li><a href="#<%= "#{item[:identifier]}" %>"><%= item[:title] %></a></li>
+    <% end %>
+    </ol>
+    <div style="page-break-before:always;"></div>
+    <% content[:items].each do |item| %>
+      <%=build(item) || "<div>#{item[:title]} is not currently supported</div>"%>
+      <hr/>
+      <a href="<%= "##{reference}.xhtml" %>"><%="Back to #{title}"%></a>
+      <div style="page-break-before:always;"></div>
+    <% end %>
+  </body>
+</html>

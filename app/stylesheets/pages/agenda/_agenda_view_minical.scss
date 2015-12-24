@@ -1,0 +1,95 @@
+@import "base/environment";
+
+$mini-cal-highlight-border: #fa0;
+
+#minical {
+  background-color: #fff;
+  text-shadow: none;
+  @if $use_new_styles { border: 1px solid $ic-border-light; }
+  @else {
+    border: 1px solid #ccc;
+    border-radius: 3px;
+  }
+  .fc-row .fc-content-skeleton {
+    padding-bottom: 0; // takes off padding to ensure borders show around dates
+  }
+  .fc-toolbar {
+    background: none;
+    border-top: none;
+    color: #666;
+    text-shadow: none;
+    padding: $ic-sp/2 0; // padding for top/bottom of toolbar
+    display: flex; // allow divs below to flex
+    align-items: center; // allow divs to center align vertically
+    justify-content: space-around; // allows the divs to space evenly, regardless of content
+    // Set order of divs
+    .fc-left {order: 1;}
+    .fc-center {order: 2;}
+    .fc-right {order: 3;}
+    .fc-clear {display: none;} // old way of clearing, don't need div for flexbox (it'll also break it)
+    h2, .h2 {
+      color: #666;
+      border-bottom: none;
+      margin: 0;
+      padding: 0;
+    }
+    @if $use_new_styles { border-bottom: 1px solid $ic-border-light; }
+    @else { border-bottom: 1px solid #ccc; }
+    margin-bottom: 0;
+  }
+
+  .fc-toolbar button {
+    padding: 0;
+    outline: 0;
+    border: none;
+    background: none;
+    box-shadow: none;
+  }
+
+  thead.fc-head {
+    display: none;
+  }
+
+  .fc-view-container {
+    @if $use_new_styles { padding: 3px; }
+    @else { padding: 6px; }
+    table {
+      border-spacing: 8px 2px;
+    }
+  }
+
+  .fc-widget-content {
+    background: none;
+    border: 1px solid #fff;
+    div {
+      min-height: 0 !important;
+    }
+  }
+
+  .fc-day-number {
+    line-height: 1;
+  }
+
+  .fc-other-month {
+    background-image: none;
+  }
+
+  .fc-bg .fc-state-highlight {
+    background: $ic-bg-light-alert;
+  }
+
+  .fc-content-skeleton .fc-state-highlight {
+    @if $use_new_styles { font-weight: 500; }
+    @else { font-weight: bold; }
+  }
+
+  .fc-basic-view td.fc-day-number { padding: 5px 0 0; }
+
+  .event {
+    @if $use_new_styles {
+      background-color: $ic-bg-light-neutral;
+    }
+    @else { background-color: #e4e8ed; }
+    .fc-day-content { display: none; }
+  }
+}

@@ -1,0 +1,37 @@
+{{#if name}}
+  <h1 class="screenreader-only">{{name}}</h1>
+{{else}}
+  <h1 class="screenreader-only">{{#t "page_header_title"}}New Assignment{{/t}}</h1>
+{{/if}}
+
+<div class="header-bar-right">
+  <div class="header-group-left" tabindex="0">
+    {{#if published}}
+      <span id='assignment-draft-state' class='published-status published'>
+        <i class="icon-publish"></i>
+        {{#t "buttons.published"}}Published{{/t}}
+      </span>
+    {{else}}
+      <span id='assignment-draft-state' class='published-status unpublished'>
+        <i class="icon-unpublished"></i>
+        {{#t "buttons.not_published"}}Not Published{{/t}}
+      </span>
+    {{/if}}
+  </div>
+  <div class="header-bar-right">
+    <div class="admin-links">
+      <a role="button" class="al-trigger btn" href="#">
+        <span class="screenreader-only">{{#t "manage_assignment"}}Manage Assignment{{/t}}</span>
+        <i class="icon-settings"></i><i class="icon-mini-arrow-down"></i>
+      </a>
+      <ul class="al-options">
+        <li>
+          <a href="#" class="delete_assignment_link">
+            <i class="icon-trash"></i>
+            {{#t "titles.delete"}}Delete{{/t}}
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

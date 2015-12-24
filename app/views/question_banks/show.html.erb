@@ -1,0 +1,202 @@
+<%
+  js_bundle :quizzes_bundle, :question_bank
+  css_bundle :quizzes, :learning_outcomes, :tinymce
+  content_for :page_title, @bank.title
+%>
+<% content_for :right_side do %>
+  <div class="rs-margin-all">
+    <% if can_do(@bank, @current_user, :manage) %>
+      <a href="#" class="btn button-sidebar-wide add_question_link"><i class="icon-add"></i> <%= t 'buttons.add_a_question', "Add a Question" %></a>
+      <a href="<%= context_url(@context, :context_question_bank_url, @bank.id) %>" class="btn button-sidebar-wide edit_bank_link"><i class="icon-edit"></i> <%= t 'buttons.edit', "Edit Bank Details" %></a>
+      <a href="#" class="btn button-sidebar-wide move_questions_link"><i class="icon-arrow-right"></i> <%= t 'buttons.move_questions', "Move Multiple Questions" %></a>
+      <a href="<%= context_url(@context, :context_question_bank_url, @bank.id) %>" class="btn button-sidebar-wide delete_bank_link"><i class="icon-end"></i> <%= t 'buttons.delete', "Delete Bank" %></a>
+    <% end %>
+    <% if @bank && !@bank.bookmarked_for?(@current_user) %>
+      <a href="<%= context_url(@context, :context_question_bank_bookmark_url, @bank ? @bank.id : "{{ id }}") %>" class="btn button-sidebar-wide bookmark_bank_link"><%= image_tag "bookmark_gray.png" %> <span class="message"><%= t 'buttons.bookmark', "Bookmark this Bank" %></span></a>
+    <% else %>
+      <button class="btn button-sidebar-wide disabled" disabled="true"><%= image_tag "bookmark.png" %> <%= t 'buttons.already_bookmarked', "Already Bookmarked" %></button>
+    <% end %>
+  </div>
+  <h2 id="aligned_outcomes"><%= t 'headings.aligned_outcomes', "Aligned Outcomes" %></h2>
+  <div class="rs-margin-lr rs-margin-bottom">
+    <ul class="unstyled_list" id="aligned_outcomes_list">
+      <% @alignments.each do |alignment| %>
+        <li class="outcome" data-id="<%= alignment.learning_outcome_id %>">
+          <span class="short_description"><%= alignment.learning_outcome.short_description %></span>
+          <a href="#" class="delete_outcome_link no-hover"><i class="icon-end standalone-icon"></i></a>
+          <span class="clear"></span>
+          <span class="content"><%= t :mastery_threshold, "mastery at %{threshold_percentage}", :threshold_percentage => raw("<span class=\"mastery_threshold\">#{(alignment.mastery_score || 0) * 100.0}</span>%") %></span>
+        </li>
+      <% end %>
+      <li class="blank outcome" style="display: none;">
+        <span class="short_description">&nbsp;</span>
+        <a href="#" class="delete_outcome_link no-hover"><i class="icon-end standalone-icon"></i></a>
+        <span class="clear"></span>
+        <span class="content"><%= t :mastery_threshold, "mastery at %{threshold_percentage}", :threshold_percentage => raw("<span class=\"mastery_threshold\">&nbsp;</span>%") %></span>
+      </li>
+    </ul>
+    <a href="#" class="btn button-sidebar-wide add_outcome_link"><i class="icon-paperclip"></i> <span class="add_outcome_text"><%= t 'links.align_outcome', "Align Outcome" %></span></a>
+  </div>
+  <%= render :partial => 'shared/find_outcome', :locals => {:purpose => 'question_bank'}  %>
+<% end %>
+
+<div class="quiz-header">
+  <%= form_for @bank, :url => context_url(@context, :context_question_bank_url, @bank), :html => {:id => "edit_bank_form", :method => :put} do |f| %>
+    <div class="displaying">
+      <h1><%= @bank.title %></h1>
+    </div>
+    <div class="editing" style="display: none;">
+      <b><%= f.label :title, :en => "Bank Name" %></b>
+      <%= f.text_field :title, :class => "bank_name_box" %>
+    </div>
+  <% end %>
+  <p>
+    <%= t('edit_warning', "Remember, changes to question templates won't automatically update quizzes that are already using those questions.") %>
+  </p>
+  <div style="margin-bottom: 5px; <%= hidden if @questions.total_pages > 1 %>">
+    <input type="checkbox" id="show_question_details" <%= 'checked' if @questions.total_pages > 1 %> /><label for="show_question_details"> <%= t('show_details', 'Show Question Details') %></label>
+  </div>
+  <div id="bank_urls" style="display: none;">
+    <a href="<%= context_url(@context, :context_question_bank_questions_url, @bank, :page => "{{ page }}") %>" class="more_questions_url">&nbsp;</a>
+    <a href="<%= context_url(@context, :context_question_bank_assessment_questions_url, @bank) %>" class="add_question_url">&nbsp;</a>
+    <a href="<%= context_url(@context, :context_question_bank_move_questions_url, @bank.id) %>" class="move_questions_url">&nbsp;</a>
+    <a href="<%= context_url(@context, :context_question_banks_url) %>" class="assessment_question_banks_url">&nbsp;</a>
+    <a href="<%= context_url(@context, :context_question_banks_url, :managed => '1') %>" class="managed_banks_url">&nbsp;</a>
+    <a href="<%= context_url(@context, :context_question_bank_reorder_url, @bank.id) %>" class="reorder_questions_url" style="display: none;">&nbsp;</a>
+    <span class="current_question_bank_id"><%= @bank.id %></span>
+  </div>
+</div>
+<div id="questions" class="<%= 'uneditable' unless can_do(@bank, @current_user, :manage) %> question_editing brief question_bank">
+  <% if @questions.total_pages <= 1 %>
+    <% @questions.each do |question| %>
+      <%= render :partial => "quizzes/quizzes/display_question", :object => question.data, :locals => {:question_bank_id => @bank.id, :editing => true, :asset_string => question.asset_string} %>
+    <% end %>
+  <% else %>
+    <%= render :partial => "question_teaser", :collection => @questions %>
+  <% end %>
+</div>
+
+<% if @questions.total_pages > 1 %>
+  <div id="more_questions" data-current-page="1" data-total-pages="<%= @questions.total_pages %>" style="font-size: 1.2em; font-weight: bold; text-align: center;">
+    <a href="<%= context_url(@context, :context_question_bank_questions_url, @bank, :page => "{{ page }}") %>" class="more_questions_link"><%= t 'links.more_questions', "more questions" %></a>
+  </div>
+<% end %>
+
+<%= render :partial => "question_teaser" %>
+<%= render :partial => "question_bank" %>
+<%= render :partial => "quizzes/quizzes/display_question", :object => nil, :locals => {:question_bank_id => @bank.id, :editing => true} %>
+<%= render :partial => "quizzes/quizzes/display_answer", :object => nil %>
+<%= render :partial => "quizzes/quizzes/form_answer", :object => nil %>
+<%= render :partial => "quizzes/quizzes/form_question", :object => nil, :locals => {:question_bank_id => @bank.id} %>
+<span class="question_bank_id" style="display: none;"><%= @bank.id %></span>
+<div style="display: none;">
+  <div id="move_question_dialog">
+    <input type="hidden" name="multiple_questions" class="multiple_questions" value="0"/>
+    <div style="font-weight: bold;"><%= t 'move_copy', 'Move/Copy' %>
+      <span class="question_name">&nbsp;</span>
+    </div>
+    <div class="question_text"></div>
+    <ul class="unstyled_list questions" style="display: none;">
+      <li class="list_question blank" style="display: none;">
+        <input type="checkbox" id="list_question" class="list_question_checkbox"/>
+        <label for="list_question" class="list_question_name"></label>
+        <div class="list_question_text">
+        </div>
+      </li>
+    </ul>
+    <div style="margin-top: 10px;">
+      <%= t 'select_bank', 'Select the destination question bank for this question:' %>
+    </div>
+    <ul class="unstyled_list banks">
+      <li class="message">
+        <%= t 'loading_banks', 'Loading banks...' %>
+      </li>
+      <li class="bank blank" style="display: none;">
+        <input type="radio" class="bank_radio" name="assessment_question_bank_id" value="new" id="bank_new"/>
+        <label for="bank_new" class="bank_label">
+          <span class="bank_name">[ <%= t 'labels.new_question_bank', 'New Question Bank' %> ]</span>
+          <span class="context_name">&nbsp;</span>
+        </label>
+        <div class="clear"></div>
+      </li>
+    </ul>
+    <div class="new_question_bank_name" style="display: none;">
+      <label for="new_question_bank_name"><%= before_label 'new_bank_name', 'New Bank Name' %></label>
+      <input type="text" name="assessment_question_bank_name" value="" id="new_question_bank_name">
+    </div>
+    <div class="copy_option">
+      <input type="checkbox" name="copy" id="copy_question" value="1" checked />
+      <label for="copy_question"><%= t 'labels.keep_copy', 'Keep a copy in this question bank as well' %></label>
+    </div>
+    <div class="button-container">
+      <button type="button" class="btn submit_button"><%= t 'button.move_copy_question', 'Move/Copy Question' %></button>
+      <button type="button" class="btn cancel_button btn button-secondary"><%= t 'button.cancel', 'Cancel' %></button>
+    </div>
+  </div>
+</div>
+<div id="assessment_question_bank_id" style="display: none;"><%= @bank.id %></div>
+
+<% content_for :stylesheets do %>
+<style>
+#move_question_dialog .question_name {
+}
+#move_question_dialog .question_text {
+  font-size: 0.8em;
+  margin-left: 20px;
+}
+#move_question_dialog ul.questions {
+  margin: 5px 20px;
+  overflow: auto;
+  min-height: 50px;
+  max-height: 200px;
+}
+#move_question_dialog ul.questions .list_question .list_question_text {
+  padding-left: 30px;
+  color: #666;
+  font-size: 0.8em;
+  max-height: 1.7em;
+  overflow: hidden;
+}
+
+#move_question_dialog ul.banks {
+  margin: 5px 20px;
+  overflow: auto;
+  min-height: 30px;
+  max-height: 150px;
+}
+#move_question_dialog li.bank {
+  margin-bottom: 5px;
+}
+#move_question_dialog li.bank .bank_label {
+  float: left;
+}
+#move_question_dialog li.bank .bank_radio {
+  float: left;
+}
+#move_question_dialog li.bank .bank_label .bank_name {
+  font-weight: bold;
+  display: block;
+}
+#move_question_dialog li.bank .bank_label .context_name {
+  font-size: 0.8em;
+  display: block;
+  padding-left: 10px;
+  color: #888;
+}
+#questions.uneditable .question_holder .display_question .move {
+  display: none;
+}
+#questions.uneditable .question_holder .display_question .links {
+  display: none;
+}
+.bottom_links {
+  text-align: right;
+  margin-right: 10px;
+  clear: left;
+}
+#questions.uneditable .question_holder .display_question .bottom_links {
+  display: none;
+}
+</style>
+<% end %>
+<%= render :partial => 'quizzes/quizzes/equations_help' %>

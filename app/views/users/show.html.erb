@@ -1,0 +1,106 @@
+<% content_for :page_title do %><%= @user.short_name %><% end %>
+
+<% content_for :right_side do %>
+  <div class="rs-margin-lr rs-margin-top">
+    <a href="<%= message_user_path(@user, @context) %>" class="btn button-sidebar-wide"><i class="icon-email"></i> <%= t 'links.message_user', "Message %{user}", :user => context_user_name(@context, @user) %></a>
+    <% if @domain_root_account.try_rescue(:enable_user_notes) and can_do(@user, @current_user, :read_user_notes) %>
+    <a href="<%= user_user_notes_path(@user) %>" class="btn button-sidebar-wide"><%= t('buttons.faculty_journal_for', 'Faculty Journal for %{user}', :user => context_user_name(@context, @user)) %></a>
+    <% end %>
+  </div>
+<% end %>
+<div style="margin: .3em">
+  <h1 class="screenreader-only"><%= t(:page_header_title, "User Profile") %></h1>
+  <% if @context_account.is_a?(Account) && @context_account.has_outcomes? %>
+    <div style="float: right;">
+      <div>
+        <a href="<%= context_url(@context_account, :context_user_outcomes_results_url, @user.id) %>" class=""><%= t('see_outcomes', 'See Outcome Results for %{user}', :user => @user.short_name) %></a>
+      </div>
+    </div>
+  <% end %>
+  <h2><%= @user.short_name %></h2>
+<% content_for :stylesheets do %>
+<style type="text/css" media="screen">
+  #user-info-fieldsets{
+    margin-bottom: 2em;
+  }
+  #user-info-fieldsets table th{
+    text-align: left;
+    padding-right: 2em;
+  }
+  ul.context_list .subtitle {
+    line-height: 1.0em;
+  }
+</style>
+<% end %>
+
+<% css_bundle :roster_user, :context_list %>
+
+<div id="user-info-fieldsets">
+  <%= render :partial => 'users/name' %>
+  <%= render :partial => 'users/logins' %>
+  <fieldset id="courses" class="">
+    <legend><%= t('enrollments', 'Enrollments') %></legend>
+    <% num_enrollments = 0 %>
+    <div style="overflow: hidden; font-size: 0.8em;" id="content">
+    <div id="courses_list" style="<%= hidden if @enrollments.empty? %>">
+      <h3><%= t('courses', 'Courses') %> <%= count_if_any(@enrollments.count) %></h3>
+      <div class="courses" style="font-size: 1.2em">
+        <ul class="unstyled_list context_list" style="margin-left: 5px; font-size: 0.9em; margin-bottom: 10px; max-height: 200px; overflow: auto;">
+          <% @enrollments.each do |enrollment| %>
+            <% num_enrollments += 1 %>
+            <%= render :partial => "enrollment", :object => enrollment %>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+    <% if @user.all_accounts && !@user.all_accounts.empty? %>
+      <h3><%= t('accounts', 'Accounts') %> <%= count_if_any(@user.all_accounts.count) %></h3>
+      <div class="accounts" style="font-size: 1.2em">
+        <ul class="unstyled_list context_list" style="margin-left: 5px; font-size: 0.9em; margin-bottom: 10px; max-height: 200px; overflow: auto;">
+          <% @user.all_accounts.each do |account| %>
+            <% num_enrollments += 1 %>
+            <li>
+              <a href="<%= url_for(account) %>">
+                <span class="name ellipsis"><%= account.name %></span>
+                <span class="subtitle ellipsis"></span>
+              </a>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+    <% if !@group_memberships.empty? %>
+      <h3><%= t('groups', 'Groups') %> <%= count_if_any(@group_memberships.count) %></h3>
+      <div class="groups" style="font-size: 1.2em">
+        <ul class="unstyled_list context_list" style="margin-left: 5px; font-size: 0.9em; margin-bottom: 10px; max-height: 200px; overflow: auto;">
+          <% @group_memberships.each do |membership| %>
+            <% num_enrollments += 1 %>
+            <li>
+              <a href="<%= group_path(membership.group) %>">
+                <span class="name ellipsis"><%= membership.group.name %></span>
+                <span class="subtitle ellipsis"><%= membership.group.context.name rescue "" %></span>
+              </a>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <% if num_enrollments == 0 %>
+      <div style="font-size: 1.2em;"><%= t('none_yet', 'None yet.') %></div>
+    <% end %>
+
+    </div>
+  </fieldset>
+  </div>
+
+  <% if page_views_enabled? %>
+    <h3>
+      <%= t('page_views', 'Page Views') %>
+    </h3>
+
+    <%= render :partial => 'page_views/table' %>
+  <% end %>
+</div>
+
+<% js_bundle :user %>

@@ -1,0 +1,27 @@
+<%= fields_for :settings, OpenObject.new(settings) do |f| %>
+  <table style="width: 500px;" class="formtable">
+    <tr>
+      <td colspan="2">
+        <%= mt :description, "You will need access to a [Wimba](%{url}) account.", :url => "http://wimba.com" %>
+      </td>
+    </tr>
+    <tr>
+      <td><%= f.blabel :domain, :en => "Domain" %></td>
+      <td>
+        <%= f.text_field :domain %> <%= mt :domain_description, "(e.g. mycompany.wimba.com)" %>
+      </td>
+    </tr>
+    <tr>
+      <td><%= f.blabel :user, :username, :en => "Username" %></td>
+      <td>
+        <%= f.text_field :user %>
+      </td>
+    </tr>
+    <tr>
+      <td><%= f.blabel :password, :en => "Password" %></td>
+      <td>
+        <%= f.password_field :password, :autocomplete => false %>
+      </td>
+    </tr>
+  </table>
+<% end %>

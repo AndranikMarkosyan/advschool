@@ -1,0 +1,27 @@
+<% define_content :link do %>
+  <%= polymorphic_url([asset.assignment.context, asset.assignment, :submission], id: asset.user) %>
+<% end %>
+
+<% define_content :subject do %>
+  <%= t :subject, "Grade Changed: %{assignment}, %{context}", :assignment => asset.assignment.title, :context => asset.assignment.context.name %>
+<% end %>
+
+<% define_content :footer_link do %>
+  <a href="<%= content(:link) %>">
+    <%= t :link_message, "You can review the assignment here" %>
+  </a>
+<% end %>
+
+<p><%= t :body, "The grade on your assignment, %{assignment_title} has been changed.", :assignment_title => asset.assignment.title %></p>
+
+<p><%= t :regraded_date, "re-graded: %{date}", :date => (datetime_string(force_zone(asset.graded_at)) rescue t(:no_date_set, "No Date Set")) %></p>
+
+<% if user.try(:send_scores_in_emails?) %>
+  <% if asset.excused? %>
+    <p><%= t :excused, "This assignment has been excused." %></p>
+  <% elsif asset.score %>
+    <p><%= t :score, "score:  %{score} out of %{total}", :score => asset.score, :total => (asset.assignment.points_possible || t(:not_applicable, "N/A")) %></p>
+  <% end %>
+<% end %>
+
+<p><%= t(:score_pending, "score pending review by the teacher") if asset.pending_review? %></p>

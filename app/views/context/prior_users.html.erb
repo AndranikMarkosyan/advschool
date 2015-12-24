@@ -1,0 +1,41 @@
+<% 
+  add_crumb(t('#crumbs.people', "People"), context_url(@context, :context_users_url))
+  add_crumb(t('#crumbs.prior_users', "Prior Users"))
+  @active_tab="people"
+%>
+<% content_for :page_title, t('titles.prior_users', "Prior Users") %>
+
+<% content_for :right_side do %>
+  <div class="rs-margin-lr rs-margin-top">
+    <a href="<%= context_url(@context, :context_users_url) %>" class="btn button-sidebar-wide"><i class="icon-arrow-left"></i> <%= t('links.back_to_people', %{Back to People}) %></a>
+  </div>
+<% end %>
+
+<% css_bundle :prior_users %>
+<h1><%= t('headings.prior_users', %{Prior Users}) %></h1>
+<table id="users">
+  <thead>
+    <tr>
+      <th scope="col"><%= t('#table_headings.name', %{Name}) %></th>
+      <th scope="col"><%= t('#table_headings.type', %{Type}) %></th>
+      <th scope="col"><%= t('#table_headings.total', %{Total}) %></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @prior_users.each do |user| %>
+      <tr>
+        <td class="name">
+          <%= link_to(user.last_name_first, context_url(@context, :context_user_url, user.id)) %>
+          <div class="email">
+            <%= user.email %>
+          </div>
+        </td>
+        <td class="type">
+          <%= user.prior_enrollment.readable_type %>
+        </td>
+        <td class="score"><%= link_to(user.prior_enrollment.computed_final_score || '--', context_url(@context, :context_student_grades_url, user.id)) if user.prior_enrollment.student? %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+<%= will_paginate(@prior_users) %>

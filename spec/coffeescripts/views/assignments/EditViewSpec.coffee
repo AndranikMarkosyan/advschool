@@ -1,0 +1,284 @@
+define [
+  'jquery'
+  'underscore'
+  'compiled/collections/SectionCollection'
+  'compiled/models/Assignment'
+  'compiled/models/DueDateList'
+  'compiled/models/Section'
+  'compiled/views/assignments/AssignmentGroupSelector'
+  'compiled/views/assignments/DueDateOverride'
+  'compiled/views/assignments/EditView'
+  'compiled/views/assignments/GradingTypeSelector'
+  'compiled/views/assignments/GroupCategorySelector'
+  'compiled/views/assignments/PeerReviewsSelector'
+  'helpers/fakeENV'
+  'compiled/userSettings'
+  'helpers/jquery.simulate'
+], ($, _, SectionCollection, Assignment, DueDateList, Section,
+  AssignmentGroupSelector, DueDateOverrideView, EditView,
+  GradingTypeSelector, GroupCategorySelector, PeerReviewsSelector, fakeENV, userSettings) ->
+
+  editView = (assignmentOpts = {}) ->
+    defaultAssignmentOpts =
+      name: 'Test Assignment'
+      assignment_overrides: []
+
+    assignmentOpts = _.extend {}, assignmentOpts, defaultAssignmentOpts
+    assignment = new Assignment assignmentOpts
+
+    sectionList = new SectionCollection [Section.defaultDueDateSection()]
+    dueDateList = new DueDateList assignment.get('assignment_overrides'), sectionList, assignment
+
+    assignmentGroupSelector = new AssignmentGroupSelector
+      parentModel: assignment
+      assignmentGroups: ENV?.ASSIGNMENT_GROUPS || []
+    gradingTypeSelector = new GradingTypeSelector
+      parentModel: assignment
+    groupCategorySelector = new GroupCategorySelector
+      parentModel: assignment
+      groupCategories: ENV?.GROUP_CATEGORIES || []
+    peerReviewsSelector = new PeerReviewsSelector
+      parentModel: assignment
+
+    app = new EditView
+      model: assignment
+      assignmentGroupSelector: assignmentGroupSelector
+      gradingTypeSelector: gradingTypeSelector
+      groupCategorySelector: groupCategorySelector
+      peerReviewsSelector: peerReviewsSelector
+      views:
+        'js-assignment-overrides': new DueDateOverrideView
+          model: dueDateList
+          views: {}
+
+    @stub(app, "_initializeWikiSidebar")
+    app.render()
+
+  module 'EditView',
+    setup: ->
+      fakeENV.setup()
+      ENV.VALID_DATE_RANGE = {}
+    teardown: ->
+      fakeENV.teardown()
+    editView: ->
+      editView.apply(this, arguments)
+
+  test 'renders', ->
+    view = @editView()
+    equal view.$('#assignment_name').val(), 'Test Assignment'
+
+  test 'rejects a letter for points_possible', ->
+    view = @editView()
+    data = points_possible: 'a'
+    errors = view.validateBeforeSave(data, [])
+    equal errors['points_possible'][0]['message'], 'Points possible must be a number'
+
+  test 'does not allow group assignment for large rosters', ->
+    ENV.IS_LARGE_ROSTER = true
+    view = @editView()
+    equal view.$("#group_category_selector").length, 0
+
+  test 'does not allow peer review for large rosters', ->
+    ENV.IS_LARGE_ROSTER = true
+    view = @editView()
+    equal view.$("#assignment_peer_reviews_fields").length, 0
+
+  test 'adds and removes student group', ->
+    ENV.GROUP_CATEGORIES = [{id: 1, name: "fun group"}]
+    ENV.ASSIGNMENT_GROUPS = [{id: 1, name: "assignment group 1"}]
+    view = @editView()
+    equal view.assignment.toView()['groupCategoryId'], null
+
+  test 'does not allow point value of -1 or less if grading type is letter', ->
+    view = @editView()
+    data = points_possible: '-1', grading_type: 'letter_grade'
+    errors = view._validatePointsRequired(data, [])
+    equal errors['points_possible'][0]['message'], 'Points possible must be 0 or more for selected grading type'
+
+  test "requires name to save assignment", ->
+    view = @editView()
+    data =
+      name: ""
+    errors = view.validateBeforeSave(data, [])
+
+    ok errors["name"]
+    equal errors["name"].length, 1
+    equal errors["name"][0]["message"], "Name is required!"
+
+  test "requires a name < 255 chars to save assignment", ->
+    view = @editView()
+    l1 = 'aaaaaaaaaa'
+    l2 = l1 + l1 + l1 + l1 + l1 + l1
+    l3 = l2 + l2 + l2 + l2 + l2 + l2
+    ok l3.length > 255
+
+    errors = view.validateBeforeSave(name: l3, [])
+    ok errors["name"]
+    equal errors["name"].length, 1
+    equal errors["name"][0]["message"], "Name is too long"
+
+  test "don't validate name if it is frozen", ->
+    view = @editView()
+    view.model.set('frozen_attributes', ['title'])
+
+    errors = view.validateBeforeSave({}, [])
+    ok !errors["name"]
+
+  test 'does show error message on assignment point change with submissions', ->
+    view = @editView has_submitted_submissions: true
+    view.$el.appendTo $('#fixtures')
+    ok !view.$el.find('#point_change_warning:visible').attr('aria-expanded')
+    view.$el.find('#assignment_points_possible').val(1)
+    view.$el.find('#assignment_points_possible').trigger("change")
+    ok view.$el.find('#point_change_warning:visible').attr('aria-expanded')
+    view.$el.find('#assignment_points_possible').val(0)
+    view.$el.find('#assignment_points_possible').trigger("change")
+    ok !view.$el.find('#point_change_warning:visible').attr('aria-expanded')
+
+  test 'does show error message on assignment point change without submissions', ->
+    view = @editView has_submitted_submissions: false
+    view.$el.appendTo $('#fixtures')
+    ok !view.$el.find('#point_change_warning:visible').attr('aria-expanded')
+    view.$el.find('#assignment_points_possible').val(1)
+    view.$el.find('#assignment_points_possible').trigger("change")
+    ok !view.$el.find('#point_change_warning:visible').attr('aria-expanded')
+
+  test 'does not allow point value of "" if grading type is letter', ->
+    view = @editView()
+    data = points_possible: '', grading_type: 'letter_grade'
+    errors = view._validatePointsRequired(data, [])
+    equal errors['points_possible'][0]['message'], 'Points possible must be 0 or more for selected grading type'
+
+    #fragile spec on Firefox, Safari
+    #adds student group
+    # view.$('#has_group_category').click()
+    # view.$('#assignment_group_category_id option:eq(0)').attr("selected", "selected")
+    # equal view.getFormData()['group_category_id'], "1"
+
+    #removes student group
+    view.$('#has_group_category').click()
+    equal view.getFormData()['groupCategoryId'], null
+
+  test 'does not allow blank external tool url', ->
+    view = @editView()
+    data = submission_type: 'external_tool'
+    errors = view._validateExternalTool(data, [])
+    equal errors["external_tool_tag_attributes[url]"][0]['message'], 'External Tool URL cannot be left blank'
+
+  test 'does not validate allowed extensions if file uploads is not a submission type', ->
+    view = @editView()
+    data = submission_types: ["online_url"], allowed_extensions: []
+    errors = view._validateAllowedExtensions(data, [])
+    equal errors["allowed_extensions"], null
+
+  test 'removes group_category_id if an external tool is selected', ->
+    view = @editView()
+    data = {
+      submission_type: 'external_tool'
+      group_category_id: '1'
+    }
+    data = view._unsetGroupsIfExternalTool(data)
+    equal data.group_category_id, null
+
+  test 'renders escaped angle brackets properly', ->
+    desc = "<p>&lt;E&gt;</p>"
+    view = @editView description: "<p>&lt;E&gt;</p>"
+    equal view.$description.val().match(desc), desc
+
+  module 'EditView: group category locked',
+    setup: ->
+      fakeENV.setup()
+      @oldAddGroupCategory = window.addGroupCategory
+      window.addGroupCategory = @stub()
+    teardown: ->
+      fakeENV.teardown()
+      window.addGroupCategory = @oldAddGroupCategory
+    editView: ->
+      editView.apply(this, arguments)
+
+  test 'lock down group category after students submit', ->
+    view = @editView has_submitted_submissions: true
+    ok view.$(".group_category_locked_explanation").length
+    ok view.$("#has_group_category").prop("disabled")
+    ok view.$("#assignment_group_category_id").prop("disabled")
+    ok !view.$("[type=checkbox][name=grade_group_students_individually]").prop("disabled")
+
+    view = @editView has_submitted_submissions: false
+    equal view.$(".group_category_locked_explanation").length, 0
+    ok !view.$("#has_group_category").prop("disabled")
+    ok !view.$("#assignment_group_category_id").prop("disabled")
+    ok !view.$("[type=checkbox][name=grade_group_students_individually]").prop("disabled")
+
+  module 'EditView: setDefaultsIfNew',
+    setup: ->
+      fakeENV.setup()
+      @stub(userSettings, 'contextGet').returns {submission_types: "foo", peer_reviews: "1", assignment_group_id: 99}
+    teardown: ->
+      fakeENV.teardown()
+    editView: ->
+      editView.apply(this, arguments)
+
+  test 'returns values from localstorage', ->
+    view = @editView()
+    view.setDefaultsIfNew()
+
+    equal view.assignment.get('submission_types'), "foo"
+
+  test 'returns string booleans as integers', ->
+    view = @editView()
+    view.setDefaultsIfNew()
+
+    equal view.assignment.get('peer_reviews'), 1
+
+  test 'doesnt overwrite existing assignment settings', ->
+    view = @editView()
+    view.assignment.set('assignment_group_id', 22)
+    view.setDefaultsIfNew()
+
+    equal view.assignment.get('assignment_group_id'), 22
+
+  test 'will overwrite empty arrays', ->
+    view = @editView()
+    view.assignment.set('submission_types', [])
+    view.setDefaultsIfNew()
+
+    equal view.assignment.get('submission_types'), "foo"
+
+  module 'EditView: setDefaultsIfNew: no localStorage',
+    setup: ->
+      fakeENV.setup()
+      @stub(userSettings, 'contextGet').returns null
+    teardown: ->
+      fakeENV.teardown()
+    editView: ->
+      editView.apply(this, arguments)
+
+  test 'submission_type is online if no cache', ->
+    view = @editView()
+    view.setDefaultsIfNew()
+
+    equal view.assignment.get('submission_type'), "online"
+
+  module 'EditView: cacheAssignmentSettings',
+    setup: ->
+      fakeENV.setup()
+    teardown: ->
+      fakeENV.teardown()
+    editView: ->
+      editView.apply(this, arguments)
+
+  test 'saves valid attributes to localstorage', ->
+    view = @editView()
+    @stub(view, 'getFormData').returns {points_possible: 34}
+    userSettings.contextSet("new_assignment_settings", {})
+    view.cacheAssignmentSettings()
+
+    equal 34, userSettings.contextGet("new_assignment_settings")["points_possible"]
+
+  test 'rejects invalid attributes when caching', ->
+    view = @editView()
+    @stub(view, 'getFormData').returns {invalid_attribute_example: 30}
+    userSettings.contextSet("new_assignment_settings", {})
+    view.cacheAssignmentSettings()
+
+    equal null, userSettings.contextGet("new_assignment_settings")["invalid_attribute_example"]

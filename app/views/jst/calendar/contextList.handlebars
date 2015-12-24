@@ -1,0 +1,20 @@
+<ul id="context-list">
+  {{#each contexts}}
+    <li data-context="{{asset_string}}"
+        class="context_list_context hover-container">
+      <span class="context-list-toggle-box group_{{asset_string}}"
+            aria-labelledby="group_{{asset_string}}_checkbox_label"
+            tabindex="0"
+            role="checkbox"></span>
+      <label id="group_{{asset_string}}_checkbox_label">
+        {{name}}
+      </label>
+      <i role="button" tabindex="0" class="ContextList__MoreBtn icon-more">
+        <span class="screenreader-only">
+          {{#t}}Open Color Picker{{/t}}
+        </span>
+      </i>
+    </li>
+  {{/each}}
+</ul>
+<div id="color_picker_holder"></div>

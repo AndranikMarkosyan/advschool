@@ -1,0 +1,23 @@
+<%= fields_for :settings, OpenObject.new(settings) do |f| %>
+  <table style="width: 500px;" class="formtable">
+    <tr>
+      <td colspan="2"><%= mt(:description, <<-TEXT, :google_url => 'https://www.google.com/accounts/ManageDomains')
+You will need to [register your domain with Google](%{google_url}).
+Make a note of your "OAuth Consumer Key" and "OAuth Consumer Secret" values.
+TEXT
+      %></td>
+    </tr>
+    <tr>
+      <td><%= f.blabel :api_key, :en => "OAuth Consumer Key" %></td>
+      <td>
+        <%= f.text_field :api_key %>
+      </td>
+    </tr>
+    <tr>
+      <td><%= f.blabel :secret_key, :en => "OAuth Consumer Secret" %></td>
+      <td>
+        <%= f.text_field :secret_key %>
+      </td>
+    </tr>
+  </table>
+<% end %>
