@@ -1,0 +1,103 @@
+<% content_for :page_title do %><%= join_title t(:page_title, "Collaboration"), @context.name %><% end %>
+
+<% js_bundle :collaborations %>
+
+<% content_for :right_side do %>
+  <div class="rs-margin-all">
+    <p><%= mt :description_rs, <<-HEREDOC, :google_url => "http://docs.google.com"
+Free online web tools like [Google Docs](%{google_url}) are an excellent place for students to work on group projects or papers, take shared notes, etc.
+Teacher *or* students can set up group collaborations.
+HEREDOC
+       %>
+    </p>
+  </div>
+<% end %>
+<a href="#" class="external_link" target="_blank" style="display: none;">&nbsp;</a>
+
+<header class="collaborations-header clearfix">
+  <h1><%= t 'titles.current', "Current Collaborations" %></h1>
+
+  <% if can_do(@context, @current_user, :create_collaborations) && !@hide_create_ui %>
+    <a role="button" href="#" class="btn add_collaboration_link">
+      <i class="icon-add" aria-hidden="true"></i>
+      <%= t('links.new', 'Start a new collaboration') %>
+    </a>
+  <% end %>
+</header>
+
+<div id="no_collaborations_message" style="<%= hidden unless @collaborations.empty? %>">
+  <% if can_do(@context, @current_user, :manage_content) %>
+    <p><%= mt :description_teacher, <<-HEREDOC, :google_url => "http://docs.google.com"
+**What do we mean by collaborations?**  We're talking about web-based tools that most
+likely your students are already familiar with.  Students can use resources like
+[Google Docs](%{google_url})
+to work collaboratively on tasks like group papers or note-taking.  This page gives them
+(and you) an easy place to keep track of those collaborations, and also to set them
+up without having to swap emails.
+HEREDOC
+        %></p>
+  <% else %>
+    <p><%= mt :description_student, <<-HEREDOC, :google_url => "http://docs.google.com"
+**What do we mean by collaborations?**  We're talking about web-based tools for
+working together on a shared document.  You can use resources like
+[Google Docs](%{google_url})
+to work collaboratively on tasks like group papers or note-taking.  This page is
+an easy place to keep track of those collaborations, and also to set them
+up without having to swap emails.
+HEREDOC
+        %></p>
+  <% end %>
+  <% if can_do(@context, @current_user, :create_collaborations) && !@hide_create_ui %>
+    <p>
+      <%= t :how_to_start_a_new_collaboration, 'To find out more about a particular type of collaboration, click "Start a New Collaboration" and then choose that type in the dropdown list.' %>
+    </p>
+  <% end %>
+</div>
+<div id="collaborations">
+<% @collaborations.each do |collaboration| %>
+  <% if can_do(collaboration, @current_user, :read) %>
+    <% if !collaboration.is_a?(GoogleDocsCollaboration) || (collaboration.is_a?(GoogleDocsCollaboration) && !@google_drive_upgrade) %>
+      <div class="collaboration <%= collaboration.style_class %> collaboration_<%= collaboration.id %>" data-id="<%= collaboration.id %>">
+        <div class="collaboration-header clearfix">
+          <h2>
+            <a class="title" href="<%= context_url(@context, :context_collaboration_url, collaboration.id) %>" target="_blank"><%= collaboration.title %></a>
+          </h2>
+          <% if can_do(collaboration, @current_user, :update) || can_do(collaboration, @current_user, :delete) %>
+            <div class="links">
+              <% if can_do(collaboration, @current_user, :update) %>
+                <a class="edit_collaboration_link no-hover" role="button" href="<%= context_url(@context, :context_collaboration_url, collaboration.id) %>" title="<%= t 'links.edit', "Edit this Collaboration" %>"><%= image_tag "edit.png" %></a>
+              <% end %>
+              <% if can_do(collaboration, @current_user, :delete) %>
+                <a class="delete_collaboration_link no-hover" role="button" href="<%= context_url(@context, :context_collaboration_url, collaboration.id) %>" title="<%= t 'links.delete', "Delete this Collaboration" %>"><%= image_tag "delete.png" %></a>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+        <div class="description"><%= collaboration.description %></div>
+        <small <%= context_sensitive_datetime_title(collaboration.created_at, @context) %>>
+          <%= t :started_by, "Started by *%{user}*, %{at}",
+                :user => context_user_name(@context, collaboration.user),
+                :wrapper => "<a href=\"#{context_url(@context, :context_user_url, collaboration.user_id)}\" class=\"collaborator_link\">\\1</a>",
+                :at => datetime_string(collaboration.created_at) %>
+        </small>
+      </div>
+    <% elsif  @google_drive_upgrade %>
+        <div class="collaboration <%= collaboration.style_class %> collaboration_<%= collaboration.id %>" data-id="<%= collaboration.id %>">
+          <h3><%= collaboration.title %></h3>
+          <div style="margin-bottom: 5px;" class="description">
+            <a href="<%= oauth_url(:service => :google_drive, :return_to => (request.url)) %>"><%= t 'google.drive.upgrade.description', "To access this collaboration you must authorize Canvas to access your Google Drive account" %></a>
+          </div>
+          <small <%= context_sensitive_datetime_title(collaboration.created_at, @context) %>>
+            <%= t :started_by, "Started by *%{user}*, %{at}",
+                  :user => context_user_name(@context, collaboration.user),
+                  :wrapper => "<a href=\"#{context_url(@context, :context_user_url, collaboration.user_id)}\" class=\"collaborator_link\">\\1</a>",
+                  :at => datetime_string(collaboration.created_at) %>
+          </small>
+        </div>
+    <% end %>
+  <% end %>
+<% end %>
+</div>
+<% if can_do(@context, @current_user, :create_collaborations) && !@hide_create_ui %>
+  <%= render :partial => 'collaborations/forms' %>
+<% end %>

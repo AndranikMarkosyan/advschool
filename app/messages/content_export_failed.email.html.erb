@@ -1,0 +1,23 @@
+<% define_content :link do %>
+  <%= polymorphic_url([asset.context, :content_exports]) %>
+<% end %>
+
+<% define_content :subject do %>
+<%= t :subject, "Course Export Failed: %{course}", :course => asset.context.name %>
+<% end %>
+
+<% define_content :footer_link do %>
+  <a href="<%= content(:link) %>">
+    <%= t :link, "Click to view exports" %>
+  </a>
+<% end %>
+
+<p>
+<%= t :body2, <<-BODY, :course => asset.context.name, :wrapper => '<em>\1</em>'
+There was a problem exporting the course *%{course}*.
+Please notify your system administrator, and give them the following export identifier:
+BODY
+%>
+</p>
+
+<p><strong>ContentExport:<%= asset.id %></strong></p>

@@ -1,0 +1,36 @@
+<nav>
+  <h2 class='first'>Basics</h2>
+  <a href="<%= url_for("file.object_ids.html") %>" class="<%= 'current' if options[:object] == 'file.object_ids.html' %>">SIS IDs</a>
+  <a href="<%= url_for("file.pagination.html") %>" class="<%= 'current' if options[:object] == 'file.pagination.html' %>">Pagination</a>
+  <a href="<%= url_for("file.throttling.html") %>" class="<%= 'current' if options[:object] == 'file.throttling.html' %>">Throttling</a>
+  <a href="<%= url_for("file.compound_documents.html") %>" class="<%= 'current' if options[:object] == 'file.compound_documents.html' %>">Compound Documents</a>
+  <a href="<%= url_for("file.file_uploads.html") %>" class="<%= 'current' if options[:object] == 'file.file_uploads.html' %>">File Uploads</a>
+  <a href="<%= url_for("file.endpoint_attributes.html") %>" class="<%= 'current' if options[:object] == 'file.endpoint_attributes.html' %>">API Endpoint Attributes</a>
+  <a href="<%= url_for("file.masquerading.html") %>" class="<%= 'current' if options[:object] == 'file.masquerading.html' %>">Masquerading</a>
+  <h2>OAuth2</h2>
+  <a href="<%= url_for("file.oauth.html") %>" class="<%= 'current' if options[:object] == 'file.oauth.html' %>">OAuth2 Overview</a>
+  <a href="<%= url_for("file.oauth_endpoints.html") %>" class="<%= 'current' if options[:object] == 'file.oauth_endpoints.html' %>">OAuth2 Endpoints</a>
+  <h2>Resources</h2>
+  <a <%= "class='current'" if options[:all_resources] %> href="all_resources.html">All Resources Reference</a>
+  <% options[:resources].each_with_index do |(resource, controllers), i| %>
+    <% link = url_for("#{topicize resource}.html")
+       klass = []
+       klass << "current" if resource == options[:object] %>
+    <a class="<%= klass.join(' ') %>" href="<%= link %>"><%= resource %></a>
+  <% end %>
+  <h2>SIS</h2>
+  <a href="<%= url_for("file.sis_csv.html") %>" class="<%= 'current' if options[:object] == 'file.sis_csv.html' %>">SIS CSV Format</a>
+  <h2>External Tools</h2>
+  <a href="<%= url_for("file.tools_intro.html") %>" class="<%= 'current' if options[:object] == 'file.tools_intro.html' %>">Introduction</a>
+  <a href="<%= url_for("file.assignment_tools.html") %>" class="<%= 'current' if options[:object] == 'file.assignment_tools.html' %>">Grading</a>
+  <a href="<%= url_for("file.navigation_tools.html") %>" class="<%= 'current' if options[:object] == 'file.navigation_tools.html' %>">Navigation</a>
+  <a href="<%= url_for("file.editor_button_tools.html") %>" class="<%= 'current' if options[:object] == 'file.editor_button_tools.html' %>">Rich Editor</a>
+  <a href="<%= url_for("file.link_selection_tools.html") %>" class="<%= 'current' if options[:object] == 'file.link_selection_tools.html' %>">Link Selection</a>
+  <a href="<%= url_for("file.homework_submission_tools.html") %>" class="<%= 'current' if options[:object] == 'file.homework_submission_tools.html' %>">Homework Submission</a>
+  <a href="<%= url_for("file.xapi.html") %>" class="<%= 'current' if options[:object] == 'file.xapi.html' %>">xAPI</a>
+  <a href="<%= url_for("file.tools_xml.html") %>" class="<%= 'current' if options[:object] == 'file.tools_xml.html' %>">Configuring</a>
+  <!-- still experimental, so we're not advertising it.
+  <h2>Other</h2>
+  <a href="<%= url_for("file.live_events.html") %>" class="<%= 'current' if options[:object] == 'file.live_events.html' %>">Live Events</a>
+  -->
+</nav>

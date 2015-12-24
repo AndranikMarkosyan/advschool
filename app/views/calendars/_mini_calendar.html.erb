@@ -1,0 +1,30 @@
+<%# cache expires at the top of the next hour %>
+<% cache(['mini_calendar_render', current.to_s, first_day.to_s].cache_key, :expires_in => (3600 - (Time.now.to_i % 3600)).seconds) do %>
+<div class="mini_month" aria-hidden="true">
+  <div class="mini-cal-header">
+    <span role="presentation" aria-hidden="true" class="prev_month_link"><i class="icon-arrow-open-left"></i></span>
+    <span role="presentation" aria-hidden="true" class="next_month_link"><i class="icon-arrow-open-right"></i></span>
+    <span class="mini-cal-month-and-year">
+      <span class="month_name"><%= I18n.t('date.month_names')[current.month] %></span>
+      <span class="year_number"><%= current.year %></span>
+    </span>
+  </div>
+  <div style="display: none;">
+    <span class="month_number"><%= current.month %></span>
+  </div>
+  <% today = Time.zone.today %>
+  <table class="mini_calendar" cellspacing="0">
+    <% day = first_day %>
+    <% 6.times do %>
+    <tr class="mini_calendar_week">
+      <% 7.times do %>
+        <td id="<%= day.strftime("mini_day_%Y_%m_%d") %>" class="mini_calendar_day day <%= day.month == current.month ? 'current_month' : 'other_month' %><%= day == today ? ' today' : '' %> <%= day.strftime("date_%m_%d_%Y") %>">
+          <span class="day_number" title="<%= day.strftime "%m/%d/%Y" %>"><%= day.day %></span>
+          <% day = day.next %>
+        </td>
+      <% end %>
+    </tr>
+    <% end %>
+  </table>
+</div>
+<% end %>

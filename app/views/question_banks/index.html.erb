@@ -1,0 +1,75 @@
+<% @active_tab = "question_banks" %>
+<% content_for :page_title, t(:page_title, "Question Banks") %>
+
+<% css_bundle :quizzes %>
+<% js_bundle :question_banks %>
+<% content_for :stylesheets do %>
+  <style>
+  .question_bank {
+    padding-bottom: 10px;
+  }
+  .question_bank .header {
+    padding: 3px 5px;
+    font-size: 1.2em;
+    font-weight: bold;
+  }
+  .question_bank .header .question_name {
+    display: inline-block;
+  }
+  .question_bank .header_content {
+    float: left;
+  }
+  .question_bank #edit_bank_form {
+    float: left;
+  }
+  .question_bank .header .links {
+    float: right;
+    opacity: 0.5;
+  }
+  .question_bank:hover .header .links {
+    opacity: 1.0;
+  }
+  .question_bank .content {
+    padding-left: 20px;
+    font-size: 0.8em;
+  }
+  </style>
+<% end %>
+
+<% content_for :right_side do %>
+  <div class="rs-margin-all">
+    <% if !@context.is_a?(User) && @context.grants_right?(@current_user, session, :manage_assignments) %>
+      <a href="#" class="add_bank_link btn button-sidebar-wide"><i class="icon-add"></i> <%= t 'add_bank', 'Add Question Bank' %></a>
+    <% end %>
+    <% if @current_user && @context != @current_user %>
+      <a href="<%= context_url(@current_user, :context_question_banks_url) %>" class="btn button-sidebar-wide see_bookmarked_banks"><%= image_tag "bookmark.png" %> <%= t 'see_bookmarked_banks', 'See My Bookmarked Banks' %></a>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="quiz-header">
+  <h1>
+    <% case @context.class.to_s %>
+      <% when 'Course' %>
+        <%= t 'course_question_banks', "Course Question Banks" %>
+      <% when 'User' %>
+        <%= t 'user_question_banks', "User Question Banks" %>
+      <% when 'Account' %>
+        <%= t 'account_question_banks', "Account Question Banks" %>
+    <% end %>
+  </h1>
+</div>
+<% if @context != @current_user %>
+  <%= render :partial => "question_bank" %>
+
+  <%= form_for :assessment_question_bank, :url => "", :html => {:id => "edit_bank_form", :style => "display: none;"} do |f| %>
+    <%= f.blabel :title, :en => "Bank Name" %>
+    <%= f.text_field :title, :class => "bank_name_box" %>
+  <% end %>
+  <div id="bank_urls">
+    <a href="<%= context_url(@context, :context_question_banks_url) %>" class="add_bank_url" style="display: none;">&nbsp;</a>
+  </div>
+<% end %>
+<div id="questions" class="question_editing brief">
+  <%= render :partial => "question_bank", :collection => @question_banks %>
+</div>

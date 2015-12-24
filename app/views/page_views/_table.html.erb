@@ -1,0 +1,22 @@
+<div id="pageviews">
+  <table data-user-id="<%= @user.id %>" class="table table-hover table-condensed table-bordered table-striped">
+    <thead class='ui-widget-header'>
+      <tr>
+        <th><%= t('headers.url', "URL") %></th>
+        <th><%= t('headers.date', "Date") %></th>
+        <th><%= t('headers.participated', "Participated") %></th>
+        <th><%= t('headers.time', "Time") %></th>
+        <th>
+          <div style="float:right; margin-right: 4px">
+            <%= link_to("csv", user_page_views_path(@user, :format => :csv), :class => 'xls') %>
+          </div>
+          <%= t('headers.user_agent', "User Agent") %>
+        </th>
+      </tr>
+    </thead>
+    <tbody id="page_view_results">
+    </tbody>
+  </table>
+</div>
+<% css_bundle :page_views %>
+<% js_bundle  :page_views %>

@@ -1,0 +1,331 @@
+define [
+  'Backbone'
+  'compiled/collections/AssignmentGroupCollection'
+  'compiled/models/AssignmentGroup'
+  'compiled/models/Assignment'
+  'compiled/views/assignments/CreateAssignmentView'
+  'compiled/views/DialogFormView'
+  'jquery'
+  'timezone'
+  'vendor/timezone/America/Juneau'
+  'vendor/timezone/fr_FR'
+  'helpers/I18nStubber'
+  'helpers/jquery.simulate'
+  'compiled/behaviors/tooltip'
+], (Backbone, AssignmentGroupCollection, AssignmentGroup, Assignment, CreateAssignmentView, DialogFormView, $, tz, juneau, french, I18nStubber) ->
+
+  fixtures = $('#fixtures')
+
+  assignment1 = ->
+    new Assignment(buildAssignment1())
+
+  assignment2 = ->
+    new Assignment(buildAssignment2())
+
+  assignment3 = ->
+    new Assignment(buildAssignment3())
+
+  assignment4 = ->
+    new Assignment(buildAssignment4())
+
+  buildAssignment1 = ->
+    date1 =
+      "due_at": new Date("August 28, 2013").toISOString()
+      "title":"Summer Session"
+    date2 =
+      "due_at": new Date("August 28, 2013").toISOString()
+      "title":"Winter Session"
+
+    buildAssignment(
+      "id":1
+      "name":"History Quiz"
+      "description":"test"
+      "due_at": new Date("August 21, 2013").toISOString()
+      "points_possible":2
+      "position":1
+      "all_dates":[date1, date2]
+    )
+
+  buildAssignment2 = ->
+    buildAssignment(
+      "id":3
+      "name":"Math Quiz"
+      "due_at": new Date("August 23, 2013").toISOString()
+      "points_possible":10
+      "position":2
+    )
+
+  buildAssignment3 = ->
+    buildAssignment(
+      "id":4
+      "name":""
+      "due_at": ""
+      "points_possible":10
+      "position":3
+    )
+
+  buildAssignment4 = ->
+    buildAssignment(
+      "id":5
+      "name":""
+      "due_at": ""
+      "unlock_at": new Date("August 1, 2013").toISOString()
+      "lock_at": new Date("August 30, 2013").toISOString()
+      "points_possible":10
+      "position":4
+    )
+
+  buildAssignment = (options) ->
+    options ?= {}
+
+    base =
+      "assignment_group_id":1
+      "due_at":null
+      "grading_type":"points"
+      "points_possible":5
+      "position":2
+      "course_id":1
+      "name":"Science Quiz"
+      "submission_types":[]
+      "html_url":"http://localhost:3000/courses/1/assignments/#{options.id}"
+      "needs_grading_count":0
+      "all_dates":[]
+      "published":true
+    $.extend base, options
+
+  assignmentGroup = ->
+    assignments = [buildAssignment1(), buildAssignment2()]
+    group = "id":1, "name":"Assignments", "position":1, "rules":{}, "group_weight":1, "assignments": assignments
+    groups = new AssignmentGroupCollection([group])
+    groups.models[0]
+
+  createView = (model) ->
+    opts = if model.constructor is AssignmentGroup
+      assignmentGroup: model
+    else
+      model: model
+
+    view = new CreateAssignmentView(opts)
+    view.$el.appendTo $('#fixtures')
+    view.render()
+
+  module 'CreateAssignmentView',
+    setup: ->
+      @assignment1 = assignment1()
+      @assignment2 = assignment2()
+      @assignment3 = assignment3()
+      @assignment4 = assignment4()
+      @group       = assignmentGroup()
+
+      @snapshot = tz.snapshot()
+      I18nStubber.pushFrame()
+
+    teardown: ->
+      ENV.VALID_DATE_RANGE = {
+        start_at: {date: null, date_context: null}
+        end_at: {date: null, date_context: null}
+      }
+
+      tz.restore(@snapshot)
+      I18nStubber.popFrame()
+
+  test "initialize generates a new assignment for creation", ->
+    view = createView(@group)
+    equal view.model.get("assignment_group_id"), @group.get("id")
+
+  test "initialize uses existing assignment for editing", ->
+    view = createView(@assignment1)
+    equal view.model.get("name"), @assignment1.get("name")
+
+  test "render shows multipleDueDates if we have all dates", ->
+    view = createView(@assignment1)
+    equal view.$('.multiple_due_dates').length, 1
+
+  test "render shows date picker when there are not multipleDueDates", ->
+    view = createView(@assignment2)
+    equal view.$('.multiple_due_dates').length, 0
+
+  test "render shows canChooseType for creation", ->
+    view = createView(@group)
+    equal view.$("#ag_1_assignment_type").length, 1
+    equal view.$("#assign_1_assignment_type").length, 0
+
+  test "render hides canChooseType for editing", ->
+    view = createView(@assignment1)
+    equal view.$("#ag_1_assignment_type").length, 0
+    equal view.$("#assign_1_assignment_type").length, 0
+
+  test "onSaveSuccess adds model to assignment group for creation", ->
+    @stub(DialogFormView.prototype, "close", ->)
+
+    equal @group.get("assignments").length, 2
+
+    view = createView(@group)
+    view.onSaveSuccess()
+
+    equal @group.get("assignments").length, 3
+
+  test "the form is cleared after adding an assignment", ->
+    @stub(DialogFormView.prototype, "close", ->)
+
+    view = createView(@group)
+    view.onSaveSuccess()
+
+    equal view.$("#ag_#{@group.id}_assignment_name").val(), ""
+    equal view.$("#ag_#{@group.id}_assignment_points").val(), "0"
+
+  test "moreOptions redirects to new page for creation", ->
+    @stub(CreateAssignmentView.prototype, "newAssignmentUrl", ->)
+    @stub(CreateAssignmentView.prototype, "redirectTo", ->)
+
+    view = createView(@group)
+    view.moreOptions()
+
+    ok view.redirectTo.called
+
+  test "moreOptions redirects to edit page for editing", ->
+    @stub(CreateAssignmentView.prototype, "redirectTo", ->)
+
+    view = createView(@assignment1)
+    view.moreOptions()
+
+    ok view.redirectTo.called
+
+  test "generateNewAssignment builds new assignment model", ->
+    view = createView(@group)
+    assign = view.generateNewAssignment()
+    ok assign.constructor == Assignment
+
+  test "toJSON creates unique label for creation", ->
+    view = createView(@group)
+    json = view.toJSON()
+    equal json.uniqLabel, "ag_1"
+
+  test "toJSON creates unique label for editing", ->
+    view = createView(@assignment1)
+    json = view.toJSON()
+    equal json.uniqLabel, "assign_1"
+
+  test "toJSON includes can choose type when creating", ->
+    view = createView(@group)
+    json = view.toJSON()
+    ok json.canChooseType
+
+  test "toJSON includes cannot choose type when creating", ->
+    view = createView(@assignment1)
+    json = view.toJSON()
+    ok !json.canChooseType
+
+  test "openAgain doesn't add datetime for multiple dates", ->
+    @stub(DialogFormView.prototype, "openAgain", ->)
+    @spy $.fn, "datetime_field"
+
+    view = createView(@assignment1)
+    view.openAgain()
+
+    ok $.fn.datetime_field.notCalled
+
+  test "openAgain adds datetime picker", ->
+    @stub(DialogFormView.prototype, "openAgain", ->)
+    @spy $.fn, "datetime_field"
+
+    view = createView(@assignment2)
+    view.openAgain()
+
+    ok $.fn.datetime_field.called
+
+  test "requires name to save assignment", ->
+    view = createView(@assignment3)
+    data =
+      name: ""
+    errors = view.validateBeforeSave(data, [])
+
+    ok errors["name"]
+    equal errors["name"].length, 1
+    equal errors["name"][0]["message"], "Name is required!"
+
+  test "requires a name < 255 chars to save assignment", ->
+    view = createView(@assignment3)
+    l1 = 'aaaaaaaaaa'
+    l2 = l1 + l1 + l1 + l1 + l1 + l1
+    l3 = l2 + l2 + l2 + l2 + l2 + l2
+    ok l3.length > 255
+
+    errors = view.validateBeforeSave(name: l3, [])
+    ok errors["name"]
+    equal errors["name"].length, 1
+    equal errors["name"][0]["message"], "Name is too long"
+
+  test "don't validate name if it is frozen", ->
+    view = createView(@assignment3)
+    @assignment3.set('frozen_attributes', ['title'])
+
+    errors = view.validateBeforeSave({}, [])
+    ok !errors["name"]
+
+  test 'rejects a letter for points_possible', ->
+    view = createView(@assignment3)
+    data =
+      name: "foo"
+      points_possible: 'a'
+    errors = view.validateBeforeSave(data, [])
+    ok errors["points_possible"]
+    equal errors['points_possible'][0]['message'], 'Points possible must be a number'
+
+  test 'passes explicit submission_type for Assignment option', ->
+    view = createView(@group)
+    data = view.getFormData()
+    equal data.submission_types, 'none'
+
+  test 'validates due date against date range', ->
+    ENV.VALID_DATE_RANGE = {
+      start_at: {date: new Date("August 20, 2013").toISOString(), date_context: "term"}
+      end_at: {date: new Date("August 30, 2013").toISOString(), date_context: "course"}
+    }
+    view = createView(@assignment3)
+    data =
+      name: "Example"
+      due_at: new Date("September 1, 2013").toISOString()
+    errors = view.validateBeforeSave(data, [])
+    equal errors['due_at'][0]['message'], 'Due date cannot be after course end'
+
+    data =
+      name: "Example"
+      due_at: new Date("July 1, 2013").toISOString()
+    errors = view.validateBeforeSave(data, [])
+    ok errors["due_at"]
+    equal errors['due_at'][0]['message'], 'Due date cannot be before term start'
+
+  test 'validates due date for lock and unlock', ->
+    view = createView(@assignment4)
+
+    data =
+      name: "Example"
+      due_at: new Date("September 1, 2013").toISOString()
+    errors = view.validateBeforeSave(data, [])
+    ok errors["due_at"]
+    equal errors['due_at'][0]['message'], 'Due date cannot be after lock date'
+
+    data =
+      name: "Example"
+      due_at: new Date("July 1, 2013").toISOString()
+    errors = view.validateBeforeSave(data, [])
+    ok errors["due_at"]
+    equal errors['due_at'][0]['message'], 'Due date cannot be before unlock date'
+
+  test "renders due dates with locale-appropriate format string", ->
+    tz.changeLocale(french, 'fr_FR')
+    I18nStubber.setLocale 'fr_FR'
+    I18nStubber.stub 'fr_FR',
+      'date.formats.short': '%-d %b'
+      'date.abbr_month_names.8': 'août'
+    view = createView(@assignment1)
+    equal view.$("#vdd_tooltip_assign_1 div dd").first().text().trim(), '28 août'
+
+  test "renders due dates in appropriate time zone", ->
+    tz.changeZone(juneau, 'America/Juneau')
+    I18nStubber.stub 'en',
+      'date.formats.short': '%b %-d'
+      'date.abbr_month_names.8': 'Aug'
+    view = createView(@assignment1)
+    equal view.$("#vdd_tooltip_assign_1 div dd").first().text().trim(), 'Aug 27'

@@ -1,0 +1,19 @@
+.group_categories_area {
+  min-height: 250px;
+}
+
+#group_categories_tabs {
+  margin: 0 -1em -1em;
+  > .collectionViewItems {
+    padding: 10px 130px 0 1em;
+  }
+  > .tab-panel {
+    position: relative;
+  }
+}
+
+.group-edit-dialog {
+  .outlet > .control-group {
+    margin: 20px 0;
+  }
+}

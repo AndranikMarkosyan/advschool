@@ -1,0 +1,26 @@
+#auth-config-right-side {
+  a {
+    img {
+      margin-right: 5px;
+    }
+  }
+}
+
+#saml_debug_info {
+  .debug_xml {
+    overflow: auto;
+    font-family: monospace;
+    border: 1px solid #ccc;
+  }
+  .debug_label{
+    font-weight: bold;
+  }
+  pre {
+    margin: auto;
+    margin-left: 10px;
+    font-family: monospace;
+  }
+  h3{
+    margin-top: 10px;
+  }
+}

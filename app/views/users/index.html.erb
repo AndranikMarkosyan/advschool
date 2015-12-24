@@ -1,0 +1,57 @@
+<% add_crumb t('crumbs.users', "Users") %>
+<% @active_tab = "users" %>
+<% content_for :page_title do %>
+  <% if @query %>
+    <%= t('search_for_user', 'User Search results for %{user_name}', :user_name => (params[:user][:name] rescue '')) %>
+  <% else %>
+    <%= t('all_users', 'All Users') %>
+  <% end %>
+<% end %>
+
+<% content_for :right_side do %>
+  <div class="rs-margin-lr rs-margin-top" style="padding-bottom: 20px;">
+    <a href="<%= context_url(@context, :context_groups_url) %>" class="btn button-sidebar-wide user_groups"><i class="icon-group"></i> <%= t('buttons.user_groups', 'View User Groups') %></a>
+    <% if service_enabled?(:avatars) %>
+      <a href="<%= context_url(@context, :context_avatars_url) %>" class="btn button-sidebar-wide manage_profile_pictures"><i class="icon-student-view"></i> <%= t('buttons.manage_profile_pictures', 'Manage Profile Pictures') %></a>
+    <% end %>
+  </div>
+
+  <% if @enrollment_terms.size > 1 %>
+    <h2><%= t('titles.choose_term', 'Choose Term') %></h2>
+    <div class="rs-margin-lr rs-margin-bottom">
+      <label for="enrollment_term"><%= before_label('show_users_for_term', 'Show users with enrollments in the term') %></label><br />
+      <%= form_tag(account_users_path, :method => :get) do %>
+        <select id="enrollment_term_id" name="enrollment_term_id">
+          <option value=''>--</option>
+          <%= options_from_collection_for_select(@enrollment_terms,
+                                                 :id, :name,
+                                                 params[:enrollment_term_id].to_i) %>
+        </select>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%= render :partial => 'shared/accounts_right_side_shared' %>
+  <%= render :partial => 'accounts/add_course_or_user', :locals => {:hide_add_course => true} %>
+<% end %>
+
+<% if @query %>
+  <h1><%= t('titles.search_results', 'Search results for "%{search_term}"', :search_term => (params[:user][:name] rescue '')) %></h1>
+  <%= t('no_results_found', "No Results Found") if @users.empty? %>
+<% else %>
+  <h1><%= t('titles.all_users', 'All Users') %></h1>
+<% end %>
+
+<%= will_paginate(@users, :style=>"margin-bottom: 1em;") %>
+
+<ul class="users">
+  <% @users.each do |user| %>
+    <%= content_tag_for(:li, user) do %>
+      <%= link_to(user.last_name_first_or_unnamed, context_url(@context, :context_user_url, user)) %>
+    <% end %>
+  <% end %>
+</ul>
+
+<%= will_paginate(@users, :style=>"margin-top: 1em;") %>
+
+<% js_bundle 'legacy/users_index' %>

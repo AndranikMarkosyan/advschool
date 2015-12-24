@@ -1,0 +1,10 @@
+<div id="sidebar_content">
+  <% if @can_view_grades || @can_grade %>
+    <%= render :partial => "grade_assignment" %>
+  <% end %>
+
+  <% if @current_user_submission %>
+    <%= render :partial => "submission_sidebar" %>
+  <% end %>
+
+</div>

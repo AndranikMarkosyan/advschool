@@ -1,0 +1,188 @@
+/* @styleguide Modal Dialog
+
+## Default Canvas modal
+
+React Modal comes with very few default classes to make it as themeable as possible. If you want plain-vanilla Canvas modal styles, be sure to specify `className: 'ReactModal__Content--canvas'` when you initialize the modal, as follows:
+
+<br/>
+
+```javascript
+React.renderComponent(
+  ReactModalExample(
+    { className: 'ReactModal__Content--canvas'
+      overlayClassName: 'ReactModal__Overlay--canvas' }
+  ), document.getElementById('react-modal-example')
+);
+```
+
+```html
+<p>
+  <div id="react-modal-example"></div>
+</p>
+```
+
+See `app/jsx/styleguide/ReactModalExample.jsx` for complete example usage.
+
+<br />
+
+## Mini Canvas modal
+
+For small dialogs like Confirms, the default Canvas modal width might seem too much.
+
+The `.ReactModal__Content--mini-modal` class can be appended to the `.ReactModal__Content--canvas` class to render a less wide modal dialog.
+
+<br/>
+
+```javascript
+React.renderComponent(
+  ReactModalExample(
+    { label: 'Trigger Confirm Dialog',
+      className: 'ReactModal__Content--canvas ReactModal__Content--mini-modal',
+      overlayClassName: 'ReactModal__Overlay--canvas' }
+  ), document.getElementById('react-modal-confirm-example')
+);
+```
+
+```html
+<p>
+  <div id="react-modal-confirm-example"></div>
+</p>
+```
+
+See `app/jsx/examples/ReactModalExample.jsx` for complete example usage.
+
+*/
+
+// Global styles for any React modal.
+// Do not change these or your name will be cursed for generations.
+.ReactModal__Overlay {
+  transition: opacity 0.2s ease-out;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: rgba($ic-color-dark, 0.75);
+  z-index: 150;
+  opacity: 0;
+
+  &.ReactModal__Overlay--after-open {
+    opacity: 1;
+  }
+}
+
+
+@mixin ReactModalPadding {
+  padding: $ic-sp/2;
+  @include breakpoint(tablet) { padding: $ic-sp; }
+}
+
+.ReactModal__Content {
+
+  // To accomodate different kinds of modals, styles for
+  // the regular Canvas modal have been scoped under the
+  // .ReactModal__Content--canvas class. So if you want a
+  // normal modal, remember to add className='ReactModal__Content--canvas'
+  // when you initialize the modal in your JSX.
+  // This className will append itself to the .ReactModal__Content
+  // element, and you will get all the nice styles below.
+
+  &.ReactModal__Content--canvas {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: $ic-sp/2;
+    @include breakpoint(mini-tablet) { padding: $ic-sp; }
+    @include breakpoint(tablet) { padding: 0; }
+
+    form { margin: 0; } // override Canvas default margin on forms
+
+    .ReactModal__Layout {
+      border-radius: $baseBorderRadius;
+      box-shadow: 0 1px 4px 1px rgba($ic-color-dark, 0.95);
+
+      @include breakpoint(tablet) {
+        width: 696px;
+        transition: all 0.5s $ic-transition;
+        opacity: 0;
+        transform: rotateX(60deg) scale(0.8);
+      }
+
+    }
+
+    &.ReactModal__Content--after-open .ReactModal__Layout {
+      @include breakpoint(tablet) {
+        opacity: 1;
+        transform: rotateX(0) scale(1);
+      }
+    }
+
+    &.ReactModal__Content--mini-modal {
+      .ReactModal__Layout {
+        @include breakpoint(tablet) { max-width: 384px; }
+      }
+    }
+
+    .ReactModal__Header {
+      @include ReactModalPadding;
+      border-top-left-radius: $baseBorderRadius;
+      border-top-right-radius: $baseBorderRadius;
+      display: flex;
+      align-items: center;
+      background: $ic-color-light;
+      border-bottom: 1px solid $ic-border-light;
+      + .ReactModal__Body,
+      + * > .ReactModal__Body:first-child {
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+      }
+    }
+
+    .ReactModal__Header-Title {
+      flex: 1;
+      overflow: hidden;
+      // remove margin from heading elements
+      * { margin: 0; }
+    }
+
+    .ReactModal__Header-Actions { text-align: right; }
+
+    .ReactModal__Body {
+      padding: $ic-sp;
+      background: $ic-color-light;
+      border-top-left-radius: $baseBorderRadius;
+      border-top-right-radius: $baseBorderRadius;
+      @include breakpoint(desktop) { padding: $ic-sp*1.5; }
+      &:last-child {
+        border-bottom-left-radius: $baseBorderRadius;
+        border-bottom-right-radius: $baseBorderRadius;
+      }
+      &.ReactModal__Body--force-no-padding { padding: 0; }
+    }
+
+    .ReactModal__Footer {
+      @include ReactModalPadding;
+      border-bottom-left-radius: $baseBorderRadius;
+      border-bottom-right-radius: $baseBorderRadius;
+      background: $ic-bg-light-neutral;
+      border-top: 1px solid $ic-border-light;
+      @include breakpoint(mini-tablet) {
+        display: flex;
+        align-items: center;
+      }
+    }
+
+    .ReactModal__Footer-Actions {
+      @include breakpoint(mini-tablet) {
+        flex: 1;
+        display: flex;
+        justify-content: flex-end;
+      }
+      .Button, .btn {
+        margin-left: $ic-sp/3;
+        &:first-of-type { margin-left: 0; }
+      }
+    }
+
+  }
+
+}

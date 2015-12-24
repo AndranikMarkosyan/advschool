@@ -1,0 +1,187 @@
+
+<%
+  context_module_next ||= nil
+  context_module = context_module_next
+  editable ||= can_do(@context, @current_user, :manage_content)
+  workflow_state = context_module && context_module.workflow_state
+  published_status = context_module && context_module.published? ? 'published' : 'unpublished'
+  differentiated_assignments_on = @context.feature_enabled?(:differentiated_assignments)
+  @modules ||= []
+%>
+<% cache_if_module(context_module, editable, differentiated_assignments_on, @current_user, @context) do %>
+
+<div
+  class="item-group-condensed context_module
+    <%= 'editable_context_module' if editable %>
+    <%= 'has_requirements' if context_module && context_module.completion_requirements.present? %>
+    "
+    aria-label="<%= context_module ? context_module.name : "" %>"
+    data-workflow-state="<%= context_module ? context_module.workflow_state : "{{ workflow_state }}"%>"
+    data-module-url="<%= context_url(@context, :context_url) %>/modules/<%= context_module ? context_module.id : "{{ id }}" %>"
+    data-module-id="<%= context_module ? context_module.id : "{{ id }}" %>"
+    id="context_module_<%= context_module ? context_module.id : "blank" %>"
+    style="<%= hidden unless context_module %>"
+>
+  <a name="module_<%= context_module.id if context_module %>"></a>
+  <div class="ig-header header" id="<%= context_module.id if context_module %>">
+    <span
+      class="sortable-handle reorder_module_link"
+      title="<%= t('reorder_modules', %{Drag to reorder modules}) %>"
+      style="<%= hidden unless @modules.length > 1 && editable %>"
+    >
+      <span class="drag_and_drop_warning">
+        <%= t('modules_keyboard_drag_and_drop',
+        'Warning: For improved accessibility in reordering Modules (or Module items), please use the Move To Dialog option found in the menu.') %>
+      </span>
+      <a aria-label="<%= t('reorder_modules', 'Drag to reorder modules') %>" href="#" class="icon-drag-handle"></a>
+    </span>
+    <a
+      href="<%= context_url(@context, :context_url) %>/modules/<%= context_module ? context_module.id : "{{ id }}" %>/reorder"
+      rel="nofollow"
+      class="reorder_items_url"
+      style="display: none;">&nbsp;
+    </a>
+    <h2 class='screenreader-only'><%= context_module.try_rescue(:name) || nbsp %></h2>
+    <span
+      role="button"
+      tabindex="0"
+      href="<%= context_url(@context, :context_url) %>/modules/<%= context_module ? context_module.id : "{{ id }}" %>/collapse"
+      class="ig-header-title collapse_module_link ellipsis"
+      aria-controls="context_module_content_<%= context_module && context_module.id %>"
+      aria-expanded="true"
+      title="<%= context_module.try_rescue(:name) || nbsp %>"
+    >
+      <i class="icon-mini-arrow-down"></i>
+      <span class="name"><%= context_module.try_rescue(:name) || nbsp %></span>
+    </span>
+    <span
+      role="button"
+      tabindex="0"
+      href="<%= context_url(@context, :context_url) %>/modules/<%= context_module ? context_module.id : "{{ id }}" %>/collapse"
+      class="ig-header-title expand_module_link ellipsis"
+      aria-controls="context_module_content_<%= context_module && context_module.id %>"
+      aria-expanded="false"
+      title="<%= context_module.try_rescue(:name) || nbsp %>"
+    >
+      <i class="icon-mini-arrow-right"></i>
+      <span class="name ellipsis"><%= context_module.try_rescue(:name) || nbsp %></span>
+    </span>
+
+    <%= render :partial => "context_modules/prerequisites_message", :locals => {:editable => editable, :context_module => context_module} %>
+
+    <div class="requirements_message">
+      <% if context_module && context_module.completion_requirements.present? %>
+        <ul class="pill">
+          <% count = context_module.requirement_count %>
+          <% completion_label = count == 1 ? t("Complete One Item") : t("Complete All Items") %>
+          <li aria-label="<%= completion_label %>" data-requirement-count="<%= count %>" tabindex="0">
+            <%= completion_label %>
+          </li>
+        </ul>
+      <% end %>
+    </div>
+
+    <div class="ig-header-admin">
+      <% unless editable %>
+        <% if context_module %>
+          <div class="completion_status">
+            <i class="icon-check complete_icon"
+               data-tooltip
+               title="<%= t('Completed')%>"
+            >
+              <span class="screenreader-only"><%= t("Module Completed") %></span>
+            </i>
+            <i class="icon-minimize in_progress_icon"
+               data-tooltip
+               title="<%= t('In Progress') %>"
+            >
+              <span class="screenreader-only"><%= t("Module In Progress") %></span>
+            </i>
+            <i class="icon-lock locked_icon"
+               data-tooltip
+               title="<%= context_module && context_module.to_be_unlocked ?
+                       t('Locked until %{unlock_date}', :unlock_date => (datetime_string(context_module.try_rescue(:unlock_at)) || nbsp)) : t('Locked') %>"
+             >
+              <span class="screenreader-only"><%= t("Module Locked") %></span>
+            </i>
+          </div>
+        <% end %>
+      <% end %>
+
+      <% if editable %>
+        <span
+          data-module-type="module"
+          data-id="<%= context_module && context_module.id %>"
+          data-course-id="<%= context_module && context_module.context_id %>"
+          data-published="<%= published_status == 'published' %>"
+          data-publishable="<%= true %>"
+          data-publish-message="<%= t('Unpublished. Click to publish %{module_name}.', {module_name: context_module ? context_module.name : 'module'}) %>"
+          data-unpublish-message="<%= t('Published. Click to unpublish %{module_name}.', {module_name: context_module ? context_module.name : 'module'}) %>"
+          title=""
+          data-tooltip
+          class="publish-icon module <%= published_status %>"
+        >
+          <i class="icon-<%= published_status %>" alt="<%= published_status == 'published' ? t('published') : t('unpublished') %>"></i>
+        </span>
+
+        <button
+          aria-label="<%= t('Add Content to %{module_name}', {module_name: context_module ? context_module.name : 'module'}) %>"
+          rel="<%= context_url(@context, :context_url) %>/modules/<%= context_module ? context_module.id : "{{ id }}" %>/items"
+          class="add_module_item_link btn"><i class="icon-plus"></i><span class="screenreader-only"><%= t('Add Content to %{module_name}', {module_name: context_module ? context_module.name : 'module'}) %></span></button>
+        <button class="btn al-trigger" aria-label="<%= t('Manage %{module_name}', {module_name: context_module ? context_module.name : 'module'})  %>">
+          <i class="icon-settings"></i><i class="icon-mini-arrow-down"></i>
+        </button>
+        <ul class="al-options">
+          <li role="presentation">
+            <a
+              href="<%= context_url(@context, :context_url) %>/modules/<%= context_module ? context_module.id : "{{ id }}" %>"
+              class="icon-edit edit_module_link"
+              title="<%= t('links.title.edit_module', %{Edit}) %>"><%= t('links.text.edit_module', %{Edit}) %></a>
+          </li>
+          <li role="presentation">
+            <a
+              href="#<%= context_module ? context_module.id : "{{ id }}" %>"
+              class="move_module_link icon-updown"
+              title="<%= t('links.title.move_module', %{Move this module}) %>"><%= t('links.text.move_module', %{Move To...}) %></a>
+          </li>
+          <li role="presentation">
+            <a
+              href="<%= context_url(@context, :context_url) %>/modules/<%= context_module ? context_module.id : "{{ id }}" %>"
+              class="delete_module_link icon-trash"
+              title="<%= t('links.title.delete_module', %{Delete this module}) %>"><%= t('links.text.delete_module', %{Delete}) %></a>
+          </li>
+          <%= external_tools_menu_items(@menu_tools[:module_menu], {link_class: "menu_tool_link", settings_key: :module_menu, in_list: true, url_params: {:modules => [context_module ? context_module.id : "{{ id }}"]}}) %>
+        </ul>
+      <% end %>
+      <span style="display: none;">
+        <span class="name"><%= context_module && context_module.name %></span>
+        <span class="id"><%= context_module && context_module.id %></span>
+        <span class="publish_final_grade"><%= context_module.try_rescue(:publish_final_grade?) || nbsp %></span>
+        <span class="require_sequential_progress"><%= context_module.try_rescue(:require_sequential_progress) || nbsp %></span>
+      </span>
+    </div>
+  </div>
+
+  <div class="content" id="context_module_content_<%= context_module && context_module.id %>">
+    <ul class="ig-list items context_module_items <%= 'manageable' if editable %>">
+      <% if context_module %>
+        <% context_module.content_tags_visible_to(@current_user).each do |tag| %>
+          <%= render :partial => 'context_modules/module_item_next', :object => tag, :locals => {:completion_criteria => context_module.completion_requirements, :editable => editable} %>
+        <% end %>
+      <% end %>
+    </ul>
+
+    <div class="footer">
+      <div class="progression_container">
+        <a href="#" class="progression_details_link" title="<%= t('links.title.student_progress', %{See Student Progress for this Module}) %>" style="display: none;">
+          <span class="progression_started"><%= t 'progression_started_count', '*%{count}* In Progress', :count => 0, :wrapper => '<span class="progression_started_count">\1</span>' %></span> <span class="progression_complete"><%= t'progression_complete_count', '*%{count}* Complete', :count => 0, :wrapper => '<span class="progression_complete_count">\1</span>' %></span>
+        </a>
+        <div class="unlock_details" style="<%= hidden unless context_module && context_module.to_be_unlocked %>">
+          <div class="unlock_at" style="<%= hidden %>"><%= datetime_string(context_module.try_rescue(:unlock_at), :verbose) %></div>
+          <%= t 'module_will_unlock_at', 'Will unlock *%{unlock_date}*', :wrapper => "<span class=\"displayed_unlock_at\" #{context_sensitive_datetime_title(context_module.try_rescue(:unlock_at), @context)}>\\1</span>", :unlock_date => (datetime_string(context_module.try_rescue(:unlock_at)) || nbsp) %>
+        </div>
+      </div><!-- progression_container -->
+    </div><!-- footer -->
+  </div>
+</div>
+<% end %>

@@ -1,0 +1,51 @@
+<li class="<%= 'unpublished' if enrollment.course.created? || enrollment.course.claimed? %> <%= enrollment.state_based_on_date %> clearfix">
+
+  <a href="<%= course_user_path(enrollment.course_id, enrollment.user_id) %>" style="float: left; max-width: 800px;">
+    <span class="name" title="<%= enrollment.long_name %>">
+      <%= enrollment.long_name %>
+      <% if enrollment.course.created? || enrollment.course.claimed? %>
+        <%= image_tag "hammer.png", :title => t('course_not_published', "This course hasn't been published yet"), :alt => t('unpublished', "Unpublished"), :class => "unpublished_icon" %>
+      <% end %>
+    </span>
+
+    <% unless enrollment.course.enrollment_term.default_term? %>
+      <span class="subtitle ellipsis"><%= enrollment.course.enrollment_term.name %></span>
+    <% end %>
+
+    <span class="subtitle ellipsis">
+      <%= Enrollment.workflow_readable_type(enrollment.state_based_on_date) %>,
+      <%=
+        case enrollment.class.to_s
+        when 'TeacherEnrollment'
+          t('roles_teacher', "Enrolled as a Teacher.")
+        when 'StudentEnrollment'
+          t('roles_student', "Enrolled as a Student.")
+        when 'TaEnrollment'
+          t('roles_ta', "Enrolled as a TA.")
+        when 'ObserverEnrollment'
+          t('roles_observer', "Enrolled as an Observer.")
+        when 'DesignerEnrollment'
+          t('roles_designer', "Enrolled as a Designer.")
+        else
+          t('roles_student', "Enrolled as a Student.")
+        end
+      %>
+
+      <% if enrollment.associated_user %>
+        <%= t('linked_to_user', '(Linked to %{user_name})', :user_name => enrollment.associated_user.name) %>
+      <% end %>
+    </span>
+  </a>
+  <span style="float: right; margin-right: 5px; margin-top: 3px;">
+    <a href="#" rel="<%= course_unenroll_url(enrollment.course_id, enrollment.id) %>" class="unenroll_link" role="button">
+      <i class="icon-end standalone-icon"></i>
+      <span class="screenreader-only"><%= t(:unenrollr, "Unenroll") %></span>
+    </a>
+  </span>
+  <% if enrollment.admin? && can_do(enrollment.user, @current_user, :read_reports) %>
+    <div style='clear:left'>
+      <%= link_to(t('links.teacher_activity', 'See Student Interactions Report'), user_course_teacher_activity_url(enrollment.user_id, enrollment.course_id)) %>
+    </div>
+  <% end %>
+  <span class="clear"></span>
+</li>

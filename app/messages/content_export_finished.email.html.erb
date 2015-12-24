@@ -1,0 +1,9 @@
+<% define_content :link do %>
+  <%= polymorphic_url([asset.context, :content_exports]) %>
+<% end %>
+<% define_content :subject do %>
+  <%= t :subject, "Course Export Finished: %{course}", :course => asset.context.name %>
+<% end %>
+<p><%= t :body2, %{Your course export for *%{course}* has finished.}, :course => asset.context.name, :wrapper => '<em>\1</em>' %></p>
+
+<p><a href="<%= content :link %>"><%= t :link, "Click to view exports" %></a></p>

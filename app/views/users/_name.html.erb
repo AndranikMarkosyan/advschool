@@ -1,0 +1,110 @@
+<% unless @read_only
+    account = @context && (@context.is_a?(Account) ? @context : @context.account)
+    managed_accounts = @user.associated_root_accounts.active.select{|a| can_do(a, @current_user, :manage_admin_users) }
+    account ||= managed_accounts.first
+    root_account = account.root_account if account
+  end
+%>
+<% js_bundle :user_name %>
+  <fieldset id="name_and_email">
+    <legend><%= t('titles.name_and_email', 'Name and Email') %></legend>
+    <table class="profile_table details user_details">
+      <tr>
+        <th><%= before_label('full_name', 'Full Name') %></th>
+        <td class="name"><%=h @user.name %></td>
+      </tr>
+      <tr>
+        <th><%= before_label('display_name', 'Display Name') %></th>
+        <td class="short_name"><%=h @user.short_name %></td>
+      </tr>
+      <tr>
+        <th><%= before_label('sortable_name', 'Sortable Name') %></th>
+        <td class="sortable_name"><%=h @user.sortable_name %></td>
+      </tr>
+      <% if service_enabled?(:avatars) %>
+        <tr>
+          <th><%= before_label('profile_picture', 'Profile Picture') %></th>
+          <td>
+            <span class="avatar_image">
+              <%= avatar @user, url: nil %>
+            </span>
+            <% if can_do(@user, @current_user, :remove_avatar) %>
+              <a href="<%= update_avatar_image_url(@user.id) %>" class="remove_avatar_picture_link"><%= t('remove_avatar', 'Remove avatar picture') %></a>
+            <% elsif !session["reported_#{@user.id}"] %>
+              <a href="<%= report_avatar_image_url(@user.id) %>" class="report_avatar_picture_link"><%= t('report_naughtiness', 'Report inappropriate picture') %></a>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+      <tr>
+        <th><%= before_label('default_email', 'Default Email') %></th>
+        <td class="email"><%=h @user.email %></td>
+      </tr>
+      <tr>
+        <th><%= before_label('time_zone', 'Time Zone') %></th>
+        <td class="time_zone"><%= @user.time_zone.try(:name) || t('none', "None") %></td>
+      </tr>
+      <% unless @read_only %>
+      <%# order important: the can_do(...) check filters out contexts that don't respond to root_account (e.g. User) %>
+        <% first = true %>
+        <td class="links" colspan="2" style="text-align: right; font-size: 0.8em; padding-top: 10px;">
+          <% if @user.grants_right?(@current_user, :rename) %>
+            <% first = false %>
+            <a href="#" class="edit_user_link"><%= t('edit', 'Edit') %></a>
+          <% end %>
+
+          <% if @user != @current_user && @user.can_masquerade?(@real_current_user || @current_user, @domain_root_account) %>
+            <%= "|" unless first %><% first = false %>
+            <% if @context && !@context.is_a?(Account) && !@context.is_a?(User) %>
+              <a href="<%= context_url(@context, :context_url, :become_user_id => @user.id) %>"> <%= t('become', 'Become') %></a>
+            <% else %>
+              <a href="<%= dashboard_url(:become_user_id => @user.id) %>"> <%= t('become', 'Become') %></a>
+            <% end %>
+          <% end %>
+
+          <% if @user.grants_right?(@current_user, :merge) %>
+            <%= "|" unless first %><% first = false %>
+            <a class="merge_user_link" href="<%= user_admin_merge_url(@user.id) %>"><%= t('merge_with_another_user', 'Merge with Another User')%></a>
+          <% end %>
+
+          <% if ((@context.is_a?(User) || @context.is_a?(Account)) && root_account) && @user.allows_user_to_remove_from_account?(root_account, @current_user) %>
+            <%= "|" unless first %>
+            <a href="<%= account_confirm_delete_user_url(root_account.id, @user.id) %>"><%= t('delete_from_account', 'Delete from %{account}', :account => root_account.name) %></a>
+          <% end %>
+        </td>
+      <% end %>
+    </table>
+  </fieldset>
+<% unless @read_only %>
+<div title="<%= t 'titles.edit_user_details', 'Edit User Details' %>" id="edit_student_dialog" style="display: none;">
+  <p><%= t('update_instructions', "You can update some of this user's information, but they can change it back if they choose.") %></p>
+  <%= form_for @user, :url => user_url(@user),
+               :html => {:id => "edit_student_form", :class => 'form-dialog form-horizontal'} do |f| %>
+    <table class="formtable">
+      <tr>
+        <td><%= f.blabel :name, :en => "Full Name" %></td>
+        <td><%= f.text_field :name %></td>
+      </tr><tr>
+        <td><%= f.blabel :short_name, :en => "Display Name" %></td>
+        <td><%= f.text_field :short_name %></td>
+      </tr><tr>
+        <td><%= f.blabel :sortable_name, :en => "Sortable Name" %></td>
+        <td><%= f.text_field :sortable_name %></td>
+      </tr>
+      <% if @user.grants_right?(@current_user, :manage_user_details) %>
+        <tr>
+          <td><%= f.blabel :time_zone, :en => "Time Zone" %></td>
+          <td><%= f.time_zone_select :time_zone, I18nTimeZone.us_zones, :model => I18nTimeZone, :default => (@domain_root_account.try(:default_time_zone) || "Mountain Time (US & Canada)") %></td>
+        </tr><tr>
+          <td><%= f.blabel :email, :en => "Default Email" %></td>
+          <td><%= f.email_field :email %></td>
+        </tr>
+      <% end %>
+    </table>
+    <div class='form-controls'>
+      <button type="button" class="btn cancel_button"><%= t('#buttons.cancel', 'Cancel') %></button>
+      <button type="submit" class="btn btn-primary submit_button"><%= t('buttons.update_details', 'Update Details') %></button>
+    </div>
+  <% end %>
+</div>
+<% end %>

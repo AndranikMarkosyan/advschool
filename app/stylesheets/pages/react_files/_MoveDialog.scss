@@ -1,0 +1,15 @@
+
+.ReactModalPortal .ReactModal__Content {
+  background: transparent;
+  border: none;
+}
+
+.ReactModalPortal .MoveDialog__folderItem--selected {
+  background-color: $ic-list-item-background--selected
+}
+
+.ReactModalPortal .MoveDialog__folderItem--focused {
+  & > .treeLabel {
+    background-color: $ic-list-item-background--hover
+  }
+}

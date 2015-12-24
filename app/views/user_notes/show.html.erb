@@ -1,0 +1,24 @@
+<p>
+  <b><%= before_label :user, "User" %></b>
+  <%=h @user_note.user.name %>
+</p>
+
+<p>
+  <b><%= before_label :title, "Title" %></b>
+  <%=h @user_note.title %>
+</p>
+
+
+<p>
+  <b><%= before_label :note, "Note" %></b>
+  <%=h @user_note.note %>
+</p>
+
+<p>
+  <b><%= before_label :created_by, "Created by" %></b>
+  <%=h @user_note.creator.name %>
+</p>
+
+
+<%= link_to 'Edit', edit_user_user_note_path(@user_note.user, @user_note) %> |
+<%= link_to 'Back', user_user_notes_path %>

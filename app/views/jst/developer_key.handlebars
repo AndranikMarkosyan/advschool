@@ -1,0 +1,59 @@
+<tr class='key{{#if inactive}} inactive{{/if}}'>
+    <td class="name">
+        <img class="icon" alt="" src="{{ icon_url }}">
+        {{name}}
+        {{#if tool_id}}<br/>( {{ tool_id }} ){{/if}}
+        {{#if inactive }}<br/><i>inactive</i>{{/if}}
+    </td>
+    <td>
+        <div>
+            {{#if user_id }}
+            <a href="/users/{{ user_id }}">
+            {{/if}}
+                {{ user_name }}
+            {{#if user_id }}
+            </a>
+            {{/if}}
+        </div>
+        <div>{{ email }}</div>
+        <div>
+            {{#if account_id }}
+            <a href="/accounts/{{ account_id }}">
+            {{/if}}
+                {{ account }}
+            {{#if account_id }}
+            </a>
+            {{/if}}
+        </div>
+    </td>
+    <td>
+        <div class="details">
+            <div>
+               {{#t "identifier"}}ID: {{id}}{{/t}}
+            </div>
+            <div>
+               {{#t "api_key"}}Key: <span class='api_key'>{{api_key}}</span>{{/t}}
+            </div>
+            <div>
+                {{#if redirect_uri}}
+                    {{#t "redirect_uri"}}URI: {{redirect_uri}}{{/t}}
+                {{/if}}
+            </div>
+        </div>
+    </td>
+    <td>
+        <div>
+            {{#t "created"}}Created:{{/t}} {{datetimeFormatted created_at}}
+        </div>
+        <!-- TODO: Add some better stats here, like token count, last usage, etc. -->
+    </td>
+    <td class='links'>
+        <a href="#" class="edit_link" title="{{#t "edit_key"}}Edit this key{{/t}}"><i class="icon-edit standalone-icon"></i></a>
+        {{#if inactive}}
+          <a href="#" class="activate_link" title="{{#t}}Activate this key{{/t}}"><i class="icon-unlock standalone-icon"></i></a>
+        {{else}}
+          <a href="#" class="deactivate_link" title="{{#t}}Deactivate this key{{/t}}"><i class="icon-lock standalone-icon"></i></a>
+        {{/if}}
+        <a href="#" class="delete_link" title="{{#t "delete_key"}}Delete this key{{/t}}"><i class="icon-trash standalone-icon"></i></a>
+    </td>
+</tr>
