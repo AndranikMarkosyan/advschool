@@ -8,6 +8,5 @@ ru:
   qualified_locale: ru-RU
 hy:
   locales:
-    hy: Հայերեն (crowd-sourced)
+    hy: Հայերեն
   qualified_locale: hy-AM
-  crowdsourced: true
